@@ -1,0 +1,11 @@
+function ImageParameter = BarOrientation(ImageParameter);
+ImageParameter.ImageKind = 6;
+ImageParameter.Parameter_Name{1} = 'Nothing';
+ImageParameter.Parameter_Value{1} = 1:2000;
+ImageParameter.Cond_Name{1} = 'Cond1';
+ImageParameter.DefaultValue.StimulusON_MS = 1000;
+ImageParameter.DefaultValue.StimulusOFF_MS = 0;
+ImageParameter.DefaultValue.BackgroundColor = [172 172 172];
+ImageParameter.TrialToConditionMode = 2;
+ImageParameter.STA.Name = 'WhiteNoise';
+ImageParameter.STA.Parameter = 0.95; %Proportion of white

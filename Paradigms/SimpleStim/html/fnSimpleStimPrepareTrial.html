@@ -1,0 +1,301 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>fnSimpleStimPrepareTrial</title><meta name="generator" content="MATLAB 7.14"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-04-07"><meta name="DC.source" content="fnSimpleStimPrepareTrial.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">Noise ?</a></li><li><a href="#4">Select new fixation and stimulus positions</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> strctTrial = fnSimpleStimPrepareTrial()
+</pre><pre class="codeinput"><span class="comment">%</span>
+<span class="comment">% Copyright (c) 2008 Shay Ohayon, California Institute of Technology.</span>
+<span class="comment">% This file is a part of a free software. you can redistribute it and/or modify</span>
+<span class="comment">% it under the terms of the GNU General Public License as published by</span>
+<span class="comment">% the Free Software Foundation (see GPL.txt)</span>
+<span class="keyword">global</span> g_strctParadigm
+g_strctParadigm.m_bMovieInitialized  = false;
+
+<span class="keyword">if</span> isempty(g_strctParadigm.m_strctDesign)
+    strctTrial = [];
+    <span class="keyword">return</span>;
+<span class="keyword">end</span>;
+
+<span class="comment">% if g_strctParadigm.m_bParameterSweep</span>
+<span class="comment">%     [iNewStimulusIndex,iSelectedBlock] =  fnSelectNextStimulusUsingParameterSweep();</span>
+<span class="comment">% else</span>
+
+
+index = fnSelectNextStimulus();
+
+<span class="comment">% end</span>
+
+<span class="comment">% strctTrial.m_strctMicroStim = fnMicroStimThisTrial(iNewStimulusIndex_Image1,iNewStimulusIndex_Image2,iSelectedBlock);</span>
+</pre><h2>Noise ?<a name="3"></a></h2><p>bOverlayNoise = g_strctParadigm.NoiseOverlayActive.Buffer(1,:,g_strctParadigm.NoiseOverlayActive.BufferIdx); if bOverlayNoise &amp;&amp;  g_strctParadigm.m_strctNoiseOverlay.m_iNumNoisePatterns  &gt; 0     strctTrial.m_bNoiseOverlay = true;     g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex=g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex+1;     if g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex &gt;  g_strctParadigm.m_strctNoiseOverlay.m_iNumNoisePatterns         g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex  = 1;     end     strctTrial.m_iNoiseIndex = g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex;     strctTrial.m_a2fNoisePattern = g_strctParadigm.m_a3fRandPatterns(:,:,strctTrial.m_iNoiseIndex); else     strctTrial.m_iNoiseIndex = 0;     strctTrial.m_bNoiseOverlay = false;     strctTrial.m_a2fNoisePattern =  []; end</p><h2>Select new fixation and stimulus positions<a name="4"></a></h2><p>if g_strctParadigm.m_bRandFixPos     aiScreenSize = fnParadigmToKofikoComm('GetStimulusServerScreenSize');     g_strctParadigm.m_iRandFixCounter = g_strctParadigm.m_iRandFixCounter + 1;     if g_strctParadigm.m_iRandFixCounter &gt;= g_strctParadigm.m_iRandFixCounterMax         g_strctParadigm.m_iRandFixCounter = 0;         g_strctParadigm.m_iRandFixCounterMax = g_strctParadigm.m_fRandFixPosMin + round(rand() * (g_strctParadigm.m_fRandFixPosMax-g_strctParadigm.m_fRandFixPosMin));         pt2iCenter = aiScreenSize(3:4)/2;         pt2iNewFixationSpot = 2*(rand(1,2)-0.5) * g_strctParadigm.m_fRandFixRadius + pt2iCenter;         % set a new random position for fixation point         fnTsSetVarParadigm('FixationSpotPix',pt2iNewFixationSpot);         fnParadigmToKofikoComm('SetFixationPosition',pt2iNewFixationSpot);         if g_strctParadigm.m_bRandFixSyncStimulus             fnTsSetVarParadigm('StimulusPos_Image1',[pt2iNewFixationSpot(1)-100 pt2iNewFixationSpot(2)]);             fnTsSetVarParadigm('StimulusPos_Image2',[pt2iNewFixationSpot(1)+100 pt2iNewFixationSpot(2)]);</p><pre>       end
+   end;
+end;</pre><pre class="codeinput"><span class="comment">% Faster access than fnTsGetVar...</span>
+strctTrial.Image_index = index;
+
+strctTrial.m_pt2iFixationSpot = g_strctParadigm.FixationSpotPix.Buffer(1,:,g_strctParadigm.FixationSpotPix.BufferIdx);
+strctTrial.m_pt2fStimulusPos = g_strctParadigm.StimulusPos.Buffer(1,:,g_strctParadigm.StimulusPos.BufferIdx);
+
+strctTrial.m_BackgroundColor = squeeze(g_strctParadigm.BackgroundColor.Buffer(1,:,g_strctParadigm.BackgroundColor.BufferIdx));
+strctTrial.m_FixationSizePix = g_strctParadigm.FixationSizePix.Buffer(1,:,g_strctParadigm.FixationSizePix.BufferIdx);
+strctTrial.m_GazeBoxPix = g_strctParadigm.GazeBoxPix.Buffer(1,:,g_strctParadigm.GazeBoxPix.BufferIdx);
+strctTrial.m_StimulusSizePix = g_strctParadigm.StimulusSizePix.Buffer(1,:,g_strctParadigm.StimulusSizePix.BufferIdx);
+strctTrial.m_Contrast = g_strctParadigm.Contrast.Buffer(1,:,g_strctParadigm.Contrast.BufferIdx);
+strctTrial.m_TF_HZ = g_strctParadigm.TF_HZ.Buffer(1,:,g_strctParadigm.TF_HZ.BufferIdx);
+strctTrial.m_Orientation = g_strctParadigm.Orientation.Buffer(1,:,g_strctParadigm.Orientation.BufferIdx);
+
+
+
+<span class="comment">% if strcmpi(strctTrial.m_strctMedia_Image1.m_strMediaType,'Movie') || strcmpi(strctTrial.m_strctMedia_Image1.m_strMediaType,'StereoMovie')</span>
+<span class="comment">%     strctTrial.m_fStimulusON_MS = 0;</span>
+<span class="comment">%     strctTrial.m_fStimulusOFF_MS = 0;</span>
+<span class="comment">% else</span>
+strctTrial.m_fStimulusON_MS = g_strctParadigm.StimulusON_MS.Buffer(1,:,g_strctParadigm.StimulusON_MS.BufferIdx);
+strctTrial.m_fStimulusOFF_MS = g_strctParadigm.StimulusOFF_MS.Buffer(1,:,g_strctParadigm.StimulusOFF_MS.BufferIdx);
+<span class="comment">% end</span>
+<span class="keyword">for</span> i = 1:length(g_strctParadigm.Parameter_Name)
+    <span class="keyword">if</span> strcmp(g_strctParadigm.Parameter_Name{i},<span class="string">'TF_HZ'</span>) <span class="keyword">...</span>
+            ||strcmp(g_strctParadigm.Parameter_Name{i},<span class="string">'Orientation'</span>)<span class="keyword">...</span>
+            ||strcmp(g_strctParadigm.Parameter_Name{i},<span class="string">'BackgroundColor'</span>)<span class="keyword">...</span>
+            ||strcmp(g_strctParadigm.Parameter_Name{i},<span class="string">'StimulusSizePix'</span>)
+
+        eval([<span class="string">'strctTrial.m_'</span> g_strctParadigm.Parameter_Name{i} <span class="string">' =  g_strctParadigm.Parameter_Value{i}(index,:);'</span>]);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> strcmp(g_strctParadigm.Parameter_Name{i},<span class="string">'StimulusPos'</span>) <span class="keyword">...</span>
+            eval([<span class="string">'strctTrial.m_pt2f'</span> g_strctParadigm.Parameter_Name{i} <span class="string">' =  g_strctParadigm.Parameter_Value{i}(index,:);'</span>]);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="comment">% strctTrial.m_fRotationAngle = g_strctParadigm.RotationAngle.Buffer(1,:,g_strctParadigm.RotationAngle.BufferIdx);</span>
+strctTrial.m_bShowPhotodiodeRect = g_strctParadigm.m_bShowPhotodiodeRect;
+strctTrial.m_iPhotoDiodeWindowPix = g_strctParadigm.m_iPhotoDiodeWindowPix;
+
+<span class="keyword">return</span>;
+</pre><pre class="codeoutput">
+ans = 
+
+               Image_index: 5
+        m_pt2iFixationSpot: [640 480]
+         m_pt2fStimulusPos: [923.0279 499.7610]
+         m_BackgroundColor: [128 128 128]
+         m_FixationSizePix: 15
+              m_GazeBoxPix: 200
+         m_StimulusSizePix: 300
+                m_Contrast: 1
+                   m_TF_HZ: 2
+             m_Orientation: 60
+          m_fStimulusON_MS: 1083
+         m_fStimulusOFF_MS: 3106
+     m_bShowPhotodiodeRect: 1
+    m_iPhotoDiodeWindowPix: 30
+
+</pre><pre class="codeinput"><span class="keyword">function</span> index = fnSelectNextStimulus()
+<span class="keyword">global</span> g_strctParadigm
+iNumMediaInBlock = length(g_strctParadigm.DisplayOrder);
+g_strctParadigm.m_CurrentDisplayIndex = g_strctParadigm.m_CurrentDisplayIndex + 1;
+<span class="keyword">if</span> g_strctParadigm.m_CurrentDisplayIndex  &gt; iNumMediaInBlock
+    <span class="comment">% Yey! We finished displaying a block!</span>
+    <span class="comment">% Reset and increase counters accordingly!</span>
+    g_strctParadigm.m_CurrentDisplayIndex = 1;
+    <span class="comment">% Generate a new random indices for the media in this block!</span>
+    <span class="keyword">if</span> g_strctParadigm.m_bRandom
+        [fDummy,g_strctParadigm.DisplayOrder] = sort(rand(1,iNumMediaInBlock));
+        [fDummy,g_strctParadigm.DisplayOrder] = sort(rand(1,iNumMediaInBlock));
+
+    <span class="keyword">else</span>
+        g_strctParadigm.DisplayOrder = 1:iNumMediaInBlock;
+    <span class="keyword">end</span>
+
+    g_strctParadigm.m_iNumTimesBlockShown = g_strctParadigm.m_iNumTimesBlockShown + 1;
+
+    <span class="comment">% How many times do we need to display this block ?</span>
+<span class="keyword">end</span>
+index = g_strctParadigm.DisplayOrder(g_strctParadigm.m_CurrentDisplayIndex);
+<span class="keyword">return</span>;
+</pre><p class="footer"><br>
+      Published with MATLAB&reg; 7.14<br></p></div><!--
+##### SOURCE BEGIN #####
+function strctTrial = fnSimpleStimPrepareTrial()
+
+%
+% Copyright (c) 2008 Shay Ohayon, California Institute of Technology.
+% This file is a part of a free software. you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation (see GPL.txt)
+global g_strctParadigm
+g_strctParadigm.m_bMovieInitialized  = false;
+
+if isempty(g_strctParadigm.m_strctDesign)
+    strctTrial = [];
+    return;
+end;
+
+% if g_strctParadigm.m_bParameterSweep
+%     [iNewStimulusIndex,iSelectedBlock] =  fnSelectNextStimulusUsingParameterSweep();
+% else
+
+
+index = fnSelectNextStimulus();
+
+% end
+
+% strctTrial.m_strctMicroStim = fnMicroStimThisTrial(iNewStimulusIndex_Image1,iNewStimulusIndex_Image2,iSelectedBlock);
+
+%% Noise ?
+% bOverlayNoise = g_strctParadigm.NoiseOverlayActive.Buffer(1,:,g_strctParadigm.NoiseOverlayActive.BufferIdx);
+% if bOverlayNoise &&  g_strctParadigm.m_strctNoiseOverlay.m_iNumNoisePatterns  > 0
+%     strctTrial.m_bNoiseOverlay = true;
+%     g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex=g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex+1;
+%     if g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex >  g_strctParadigm.m_strctNoiseOverlay.m_iNumNoisePatterns
+%         g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex  = 1;
+%     end
+%     strctTrial.m_iNoiseIndex = g_strctParadigm.m_strctNoiseOverlay.m_iNoiseIndex;
+%     strctTrial.m_a2fNoisePattern = g_strctParadigm.m_a3fRandPatterns(:,:,strctTrial.m_iNoiseIndex);
+% else
+%     strctTrial.m_iNoiseIndex = 0;
+%     strctTrial.m_bNoiseOverlay = false;
+%     strctTrial.m_a2fNoisePattern =  [];
+% end
+
+%% Select new fixation and stimulus positions
+% if g_strctParadigm.m_bRandFixPos
+%     aiScreenSize = fnParadigmToKofikoComm('GetStimulusServerScreenSize');
+%     g_strctParadigm.m_iRandFixCounter = g_strctParadigm.m_iRandFixCounter + 1;
+%     if g_strctParadigm.m_iRandFixCounter >= g_strctParadigm.m_iRandFixCounterMax
+%         g_strctParadigm.m_iRandFixCounter = 0;
+%         g_strctParadigm.m_iRandFixCounterMax = g_strctParadigm.m_fRandFixPosMin + round(rand() * (g_strctParadigm.m_fRandFixPosMax-g_strctParadigm.m_fRandFixPosMin));
+%         pt2iCenter = aiScreenSize(3:4)/2;
+%         pt2iNewFixationSpot = 2*(rand(1,2)-0.5) * g_strctParadigm.m_fRandFixRadius + pt2iCenter;
+%         % set a new random position for fixation point
+%         fnTsSetVarParadigm('FixationSpotPix',pt2iNewFixationSpot);
+%         fnParadigmToKofikoComm('SetFixationPosition',pt2iNewFixationSpot);
+%         if g_strctParadigm.m_bRandFixSyncStimulus
+%             fnTsSetVarParadigm('StimulusPos_Image1',[pt2iNewFixationSpot(1)-100 pt2iNewFixationSpot(2)]);
+%             fnTsSetVarParadigm('StimulusPos_Image2',[pt2iNewFixationSpot(1)+100 pt2iNewFixationSpot(2)]);
+%
+%         end
+%     end;
+% end;
+
+
+% Faster access than fnTsGetVar...
+strctTrial.Image_index = index;
+
+strctTrial.m_pt2iFixationSpot = g_strctParadigm.FixationSpotPix.Buffer(1,:,g_strctParadigm.FixationSpotPix.BufferIdx);
+strctTrial.m_pt2fStimulusPos = g_strctParadigm.StimulusPos.Buffer(1,:,g_strctParadigm.StimulusPos.BufferIdx);
+
+strctTrial.m_BackgroundColor = squeeze(g_strctParadigm.BackgroundColor.Buffer(1,:,g_strctParadigm.BackgroundColor.BufferIdx));
+strctTrial.m_FixationSizePix = g_strctParadigm.FixationSizePix.Buffer(1,:,g_strctParadigm.FixationSizePix.BufferIdx);
+strctTrial.m_GazeBoxPix = g_strctParadigm.GazeBoxPix.Buffer(1,:,g_strctParadigm.GazeBoxPix.BufferIdx);
+strctTrial.m_StimulusSizePix = g_strctParadigm.StimulusSizePix.Buffer(1,:,g_strctParadigm.StimulusSizePix.BufferIdx);
+strctTrial.m_Contrast = g_strctParadigm.Contrast.Buffer(1,:,g_strctParadigm.Contrast.BufferIdx);
+strctTrial.m_TF_HZ = g_strctParadigm.TF_HZ.Buffer(1,:,g_strctParadigm.TF_HZ.BufferIdx);
+strctTrial.m_Orientation = g_strctParadigm.Orientation.Buffer(1,:,g_strctParadigm.Orientation.BufferIdx);
+
+
+
+% if strcmpi(strctTrial.m_strctMedia_Image1.m_strMediaType,'Movie') || strcmpi(strctTrial.m_strctMedia_Image1.m_strMediaType,'StereoMovie')
+%     strctTrial.m_fStimulusON_MS = 0;
+%     strctTrial.m_fStimulusOFF_MS = 0;
+% else
+strctTrial.m_fStimulusON_MS = g_strctParadigm.StimulusON_MS.Buffer(1,:,g_strctParadigm.StimulusON_MS.BufferIdx);
+strctTrial.m_fStimulusOFF_MS = g_strctParadigm.StimulusOFF_MS.Buffer(1,:,g_strctParadigm.StimulusOFF_MS.BufferIdx);
+% end
+for i = 1:length(g_strctParadigm.Parameter_Name)
+    if strcmp(g_strctParadigm.Parameter_Name{i},'TF_HZ') ...
+            ||strcmp(g_strctParadigm.Parameter_Name{i},'Orientation')...
+            ||strcmp(g_strctParadigm.Parameter_Name{i},'BackgroundColor')...
+            ||strcmp(g_strctParadigm.Parameter_Name{i},'StimulusSizePix')
+        
+        eval(['strctTrial.m_' g_strctParadigm.Parameter_Name{i} ' =  g_strctParadigm.Parameter_Value{i}(index,:);']);
+    end
+    if strcmp(g_strctParadigm.Parameter_Name{i},'StimulusPos') ...
+            eval(['strctTrial.m_pt2f' g_strctParadigm.Parameter_Name{i} ' =  g_strctParadigm.Parameter_Value{i}(index,:);']);
+    end
+end
+% strctTrial.m_fRotationAngle = g_strctParadigm.RotationAngle.Buffer(1,:,g_strctParadigm.RotationAngle.BufferIdx);
+strctTrial.m_bShowPhotodiodeRect = g_strctParadigm.m_bShowPhotodiodeRect;
+strctTrial.m_iPhotoDiodeWindowPix = g_strctParadigm.m_iPhotoDiodeWindowPix;
+
+return;
+
+
+
+
+function index = fnSelectNextStimulus()
+global g_strctParadigm
+iNumMediaInBlock = length(g_strctParadigm.DisplayOrder);
+g_strctParadigm.m_CurrentDisplayIndex = g_strctParadigm.m_CurrentDisplayIndex + 1;
+if g_strctParadigm.m_CurrentDisplayIndex  > iNumMediaInBlock
+    % Yey! We finished displaying a block!
+    % Reset and increase counters accordingly!
+    g_strctParadigm.m_CurrentDisplayIndex = 1;
+    % Generate a new random indices for the media in this block!
+    if g_strctParadigm.m_bRandom
+        [fDummy,g_strctParadigm.DisplayOrder] = sort(rand(1,iNumMediaInBlock));
+        [fDummy,g_strctParadigm.DisplayOrder] = sort(rand(1,iNumMediaInBlock));
+        
+    else
+        g_strctParadigm.DisplayOrder = 1:iNumMediaInBlock;
+    end
+    
+    g_strctParadigm.m_iNumTimesBlockShown = g_strctParadigm.m_iNumTimesBlockShown + 1;
+    
+    % How many times do we need to display this block ?
+end
+index = g_strctParadigm.DisplayOrder(g_strctParadigm.m_CurrentDisplayIndex);
+return;
+
+
+##### SOURCE END #####
+--></body></html>
