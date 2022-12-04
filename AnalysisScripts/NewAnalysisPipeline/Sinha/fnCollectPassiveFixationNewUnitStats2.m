@@ -1,4 +1,4 @@
-function acUnitsStat = fnCollectPassiveFixationNewUnitStats(strctKofiko, strctSync, strctConfig, strctInterval,afActualFlipTime_PLX)
+function acUnitsStat = fnCollectPassiveFixationNewUnitStats2(strctKofiko, strctSync, strctConfig, strctInterval,afActualFlipTime_PLX)
 % Computes various statistics about the recorded units in a given recorded session
 %
 % Copyright (c) 2008 Shay Ohayon, California Institute of Technology.
@@ -13,9 +13,23 @@ assert(iParadigmIndex~=-1);
 acUnitsStat = [];
 
 % First, find which lists were loaded during the entire Kofiko recording file
+
+% ~~ strctKofiko.g_astrctAllParadigms{iParadigmIndex} 
+% ~~ strctKofiko.g_astrctAllParadigms contains 7 kinds of paramdigm settings
+% ~~ strctKofiko.g_astrctAllParadigms{iParadigmIndex} chose the one
+%    matching the current paradigm
+
+% ~~ find all unique stimulus set; Monkey_Bodyparts\imlist.txt, StevenMoreTests\StevenMore.xml
 acUniqueLists = setdiff(unique(strctKofiko.g_astrctAllParadigms{iParadigmIndex}.ImageList.Buffer),{''});
 iNumUniqueLists = length(acUniqueLists);
-afTrialsStartTime_Kofiko = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.TimeStamp;
+
+% ~~ strctKofiko is unique to every recording session??? 
+afTrialsStartTime_Kofiko = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.TimeStamp;  
+
+% ~~ how does ImageList arrange all stimulus ????
+% ~~ maybe one list refers to a unique picutre set
+% ~~ the ListOnsetTime is the start time of each picture set (which could contain hundreds of pics) 
+% ~~ diff(afListOnsetTimes_Kofiko)/60 is [0.1104  0.6516  24.4703  Inf]; 
 afListOnsetTimes_Kofiko = [strctKofiko.g_astrctAllParadigms{iParadigmIndex}.ImageList.TimeStamp,Inf];
 
 afListOnsetTimes_Plexon = fnTimeZoneChange(afListOnsetTimes_Kofiko,strctSync,'Kofiko','Plexon');
@@ -26,23 +40,30 @@ fnWorkerLog('Channel %d, Unit %d...',strctInterval.m_iChannel,strctInterval.m_iU
 % fStartTS_PTB_Kofiko = fnTimeZoneChange(strctInterval.m_fStartTS_Plexon,strctSync,'Plexon','Kofiko');
 % fEndTS_PTB_Kofiko = fnTimeZoneChange(strctInterval.m_fEndTS_Plexon,strctSync,'Plexon','Kofiko');
 
-for iListIter=1:iNumUniqueLists
+for iListIter=1:iNumUniqueLists  % all settings； Here is 2
     strListName = acUniqueLists{iListIter};
     
     
     % Find all relevant trials: ones that belond to this list AND were
     % recorded during this experiment.
+
+    % ~~ why negative numbers????
     aiListIndicesInArray = find(ismember(strctKofiko.g_astrctAllParadigms{iParadigmIndex}.ImageList.Buffer,strListName));
     afListOnsetTime_PLX = afListOnsetTimes_Plexon(aiListIndicesInArray);
     afListOffsetTime_PLX = afListOnsetTimes_Plexon(aiListIndicesInArray+1);
     
     aiRelevantTrialsInd = [];
     for k=1:length(afListOnsetTime_PLX)
-        aiTrialInd = find(  afTrialsStartTime_Plexon >= strctInterval.m_fStartTS_Plexon & afTrialsStartTime_Plexon <= strctInterval.m_fEndTS_Plexon & ...
-            afTrialsStartTime_Plexon >= afListOnsetTime_PLX(k) & afTrialsStartTime_Plexon <= afListOffsetTime_PLX(k));
+        aiTrialInd = find( ...
+            afTrialsStartTime_Plexon >= strctInterval.m_fStartTS_Plexon & ...
+            afTrialsStartTime_Plexon <= strctInterval.m_fEndTS_Plexon & ...
+            afTrialsStartTime_Plexon >= afListOnsetTime_PLX(k) & ...
+            afTrialsStartTime_Plexon <= afListOffsetTime_PLX(k));
         aiRelevantTrialsInd = [aiRelevantTrialsInd,aiTrialInd];
     end
     
+    % ~~ the first iListIter won't be bothered by fnCollectPassiveFixationNewUnitStatsAux anyway
+    % ~~ the first aiRelevantTrialsInd is (1, 119)
     if ~isempty(aiRelevantTrialsInd)
         strctUnit = fnCollectPassiveFixationNewUnitStatsAux(...
             strctKofiko, strctSync, strctConfig, strctInterval, strListName, aiRelevantTrialsInd, iParadigmIndex,afActualFlipTime_PLX);
@@ -56,7 +77,7 @@ return;
 
 
 
-
+% ~~ error when iListIter == 2 maybe due to no .xml for StevenMore.xml
 function strctUnit = fnCollectPassiveFixationNewUnitStatsAux(...
     strctKofiko, strctSync, strctConfig, strctInterval, strListName, aiTrialIndices, iParadigmIndex,afActualFlipTime_PLX)
 
@@ -71,9 +92,8 @@ fEndTS_PTB_Kofiko = fnTimeZoneChange(strctInterval.m_fEndTS_Plexon,strctSync,'Pl
 if strcmpi(strExt,'.txt')
     [a2bStimulusToCondition,acConditionNames,strImageListDescrip] = fnLoadCategoryFile(strListName);
     
-elseif strcmpi(strExt,'.xml')
+elseif strcmpi(strExt,'.xml')  
     [strPath,strImageListDescrip]=fileparts(strListName);
-    
     
     % Is in cache?
     if isempty(g_acDesignCache)
@@ -90,9 +110,6 @@ elseif strcmpi(strExt,'.xml')
         
         if exist(strListName,'file')
             fnWorkerLog('Loading Design to infer conditions (%s)',strListName);
-            
-            
-           
             strctDesign = fnParsePassiveFixationDesignMediaFiles(strListName, false, false);
         else
             % Try locally ?
@@ -106,17 +123,24 @@ elseif strcmpi(strExt,'.xml')
         
         acConditionNames = strctDesign.m_acConditionNames;
         a2bStimulusToCondition = strctDesign.m_a2bStimulusToCondition;
-        
         g_acDesignCache = fnAddAttribute(g_acDesignCache, strListName, '', {acConditionNames, a2bStimulusToCondition});
         
     end
 end
 
 fnWorkerLog('Passive fixation experiment. List: %s',strImageListDescrip);
+% ~~ in the example returns nothing
 [strSpecialAnalysisFunc, strDisplayFunction,strctSpecialAnalysis] = fnFindSpecialAnalysis(strctConfig,  strListName);
+
+%% ~~ adjust screen time lag
 % Seems like PTB returns crappy time estimates when flips actually occurred
 % with our LCD monitor.
 % use the timestamp stored in Kofiko instead...
+
+% ~~ strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer 
+% ~~ is (9, 21925)
+% ~~ why aiTrialIndices only contains 119 elements while whole Buffer
+%    contains 20000 + ???
 aiStimulusIndex = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer(1,aiTrialIndices);
 
 afOnset_StimServer_TS = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer(2,aiTrialIndices);
@@ -133,7 +157,9 @@ if size(strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer,1) < 8
     afImageOFF =  fnMyInterp1(strctKofiko.g_astrctAllParadigms{iParadigmIndex}.StimulusOFF_MS.TimeStamp,...
     strctKofiko.g_astrctAllParadigms{iParadigmIndex}.StimulusOFF_MS.Buffer(:,1),afOnset_Kofiko_TS);
 else
+    % ~~ all 250
     afImageON =  strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer(8,aiTrialIndices);
+    % ~~ all 150 why??
     afImageOFF =  strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer(9,aiTrialIndices);
 end
 
@@ -141,6 +167,7 @@ afStimulusON_TS_Plexon = fnTimeZoneChange(afOnset_Kofiko_TS, strctSync,'Kofiko',
 afStimulusOFF_TS_Plexon = afStimulusON_TS_Plexon+afImageON/1e3;
 
 if ~isempty(afActualFlipTime_PLX)
+    %% ~~ adjust image onset plexon
     fnWorkerLog('Adjusting image onset times using photodiode information!');
     afScreenLag_ON_MS = nans(1,  length(afStimulusON_TS_Plexon));
     afScreenLag_OFF_MS = nans(1,  length(afStimulusOFF_TS_Plexon));
@@ -178,6 +205,8 @@ if ~isempty(afActualFlipTime_PLX)
             plot(afActualFlipTime_PLX(iIndex)*ones(1,2),[0.5 1],'g','LineWidth',2);
         end
         
+        %% ~~ adjust image offset plexon
+
         %iIndex = find(afActualFlipTime_PLX > afStimulusOFF_TS_Plexon(k),1,'first');
         [~,iIndex1] = min( abs(afActualFlipTime_PLX - afStimulusOFF_TS_Plexon(k)));
         [~,iIndex2] = min( abs(afActualFlipTime_PLX - afStimulusOFF_TS_Plexon(k)));
@@ -188,15 +217,11 @@ if ~isempty(afActualFlipTime_PLX)
         if (abs(lag1) < abs(lag2))
             iIndex = iIndex1;
             afScreenLag_OFF_MS(k) = (afActualFlipTime_PLX(iIndex) - afStimulusOFF_TS_Plexon(k))*1e3;
-            
         else
             iIndex = iIndex2;
             afScreenLag_OFF_MS(k) = (afActualFlipTime_PLX(iIndex) - afStimulusON_TS_Plexon_Using_StimulusServer(k))*1e3;
-            
         end
-        
-        
-        
+              
         afModifiedStimulusOFF_TS_Plexon(k) = afActualFlipTime_PLX(iIndex);
         
         if 0
@@ -218,14 +243,12 @@ if ~isempty(afActualFlipTime_PLX)
         %         [afImageON(k-2:k);
         %         afImageOFF(k-2:k)]
         %
-        
-        
-        
     end
     fnWorkerLog('Average screen lag: %.2f ms',nanmean(afScreenLag_ON_MS));
     
 end
 % Adjust 
+% ~~ all 119 trials seems all have Flip OFF Errors.. 
 iNumFlipONErrors = sum(abs(afScreenLag_ON_MS) > 50);
 iNumFlipOFFErrors = sum(abs(afScreenLag_OFF_MS) > 50);
 if iNumFlipONErrors > 0 && iNumFlipONErrors <= 10  
@@ -234,6 +257,8 @@ elseif iNumFlipONErrors  > 10000
     warning('Something went terribly wrong with photodiode synchronization');
 end;
 
+
+%% ~~ find valid trials (monkey fixated the fixation)
 % Find valid trials, in which monkey fixated at the fixation point
 % afModifiedStimulusON_TS_Plexon = afStimulusON_TS_Plexon;
 % afModifiedStimulusOFF_TS_Plexon = afStimulusOFF_TS_Plexon;
@@ -241,13 +266,13 @@ strctValidTrials = fnFindValidTrialsAux(strctKofiko,strctInterval, strctSync, iP
     strctConfig.m_strctParams.m_fFixationPercThreshold,...
     aiStimulusIndex,afModifiedStimulusON_TS_Plexon,afModifiedStimulusOFF_TS_Plexon,strctSpecialAnalysis);
 
-abValidTrials = strctValidTrials.m_abValidTrials;
+abValidTrials = strctValidTrials.m_abValidTrials;  % sum(abValidTrials) is 115
 
-if isempty(a2bStimulusToCondition)
+if isempty(a2bStimulusToCondition)  % (96, 6)
 %     iNumStimuli = length(unique(aiStimulusIndex));%
       iNumStimuli = max(aiStimulusIndex);
 else
-    iNumStimuli = size(a2bStimulusToCondition,1);
+    iNumStimuli = size(a2bStimulusToCondition,1);  % 96
 end
 
 
@@ -270,8 +295,17 @@ aiStimulusIndexValid = aiStimulusIndex(abValidTrials);
 %%
 
 
-% Construct Peristimulus intervals
+% Construct Peristimulus intervals 
+% ~~ -200 to 900
 aiPeriStimulusRangeMS = strctConfig.m_strctParams.m_iBeforeMS:fMaxTrialLengthMS+strctConfig.m_strctParams.m_iAfterMS;
+
+% ~~ I = find(X,K) returns at most the first K indices corresponding to 
+%     the nonzero entries of the array X.  K must be a positive integer, 
+%     but can be of any numeric type.
+%  
+%     I = find(X,K,'first') is the same as I = find(X,K).
+% ~~ the first indices that
+%    aiPeriStimulusRangeMS>=strctConfig.m_strctParams.m_iStartAvgMS (is true)
 iStartAvg = find(aiPeriStimulusRangeMS>=strctConfig.m_strctParams.m_iStartAvgMS,1,'first');
 iEndAvg = find(aiPeriStimulusRangeMS>=strctConfig.m_strctParams.m_iEndAvgMS,1,'first');
 iStartBaselineAvg = find(aiPeriStimulusRangeMS>=strctConfig.m_strctParams.m_iStartBaselineAvgMS,1,'first');

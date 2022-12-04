@@ -1,4 +1,4 @@
-function fnPipelinePassiveFixation_v3(strctInputs)
+function fnPipelinePassiveFixation_PB(strctInputs)
 clear global g_acDesignCache
 
 strDataRootFolder = strctInputs.m_strDataRootFolder;
