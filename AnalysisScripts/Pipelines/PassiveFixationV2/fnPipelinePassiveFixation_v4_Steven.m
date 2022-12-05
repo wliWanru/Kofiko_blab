@@ -187,8 +187,10 @@ for iChannelIter=1:iNumSortedChannels
         fnSetWaitbarGlobal(iUnitIter/iNumSortedUnits,3, 3);
         
         % ~~ ??? why change time zone? stored as absolute time??  
-        fStartTS_PTB_Kofiko = fnTimeZoneChange(astrctUnits(iUnitIter).m_afInterval(1) ,strctSync,'Plexon','Kofiko');
-        fEndTS_PTB_Kofiko = fnTimeZoneChange(astrctUnits(iUnitIter).m_afInterval(2),strctSync,'Plexon','Kofiko');
+        fStartTS_PTB_Kofiko = fnTimeZoneChange( ...
+            astrctUnits(iUnitIter).m_afInterval(1) ,strctSync,'Plexon','Kofiko');
+        fEndTS_PTB_Kofiko = fnTimeZoneChange( ...
+            astrctUnits(iUnitIter).m_afInterval(2),strctSync,'Plexon','Kofiko');
         
         % Find out which paradigms were run while this unit was alive...
         % ~~ ??? may have multiple tasks within one recording session for
@@ -232,7 +234,8 @@ for iChannelIter=1:iNumSortedChannels
             strctInterval.m_a2fAdvancerPositionTS_Plexon = a2fAdvancerPositionTS_Plexon;
 
             %% apply unit stats
-            acUnitsStat = fnCollectPassiveFixationNewUnitStats2(strctKofiko, strctSync, strctConfig, strctInterval,afActualFlipTime_PLX);
+            acUnitsStat = fnCollectPassiveFixationNewUnitStats2( ...
+                strctKofiko, strctSync, strctConfig, strctInterval, afActualFlipTime_PLX);
 
             %% store unit stats results
             if ~isempty(acUnitsStat)
