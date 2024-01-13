@@ -124,7 +124,7 @@ grid on;
 xlabel('Avg Spike wave form');
 
 
-%% ~~ second row middle ISI distribution count (histogram)
+%% ~~ second row middle ISI distribution count (histogram) Inter Spike 
 
 h5=tightsubplot(3,6,8,'Spacing',0.05,'Parent',hParent);
 hBar = bar(strctUnit.m_afISICenter(1:end-1), strctUnit.m_afISIDistribution(1:end-1));

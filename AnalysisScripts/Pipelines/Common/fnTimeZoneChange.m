@@ -67,7 +67,7 @@ end
 return;
 
 function afTransTS = fnApplyTransform(afTS, strctSync)
-if isfield(strctSync,'m_afOffset')
+if isfield(strctSync,'m_afOffset')  % ~~ kofiko to Plexon has this field 
     % This involves conversion between kofiko and plexon.
     % since plexon can pause time, we need to take into effect the frame
     % issue...
@@ -83,24 +83,36 @@ if isfield(strctSync,'m_afOffset')
     afTransTS = NaN*ones(1,iNumTimePoints);
     for iFrameIter=1:iNumFrames
         if iFrameIter == 1
+            % ~~ make sure every ts in transformed to kofiko file is valid (earlier
+            %    than actual ending of kofiko (maybe the ending of the current list?
+            %    )) abRelevantTS is the indices of valid trials
             abRelevantTS = afTS <= strctSync.m_afEndFrameTS_Kofiko(iFrameIter);
         elseif iFrameIter == iNumFrames
             abRelevantTS =afTS >= strctSync.m_afStartFrameTS_Kofiko(iFrameIter) ;
         else
-            abRelevantTS = afTS >= strctSync.m_afStartFrameTS_Kofiko(iFrameIter) & afTS <= strctSync.m_afEndFrameTS_Kofiko(iFrameIter);
+            abRelevantTS = afTS >= strctSync.m_afStartFrameTS_Kofiko(iFrameIter) &...
+                afTS <= strctSync.m_afEndFrameTS_Kofiko(iFrameIter);
         end
-        afTransTS(abRelevantTS) =strctSync.m_afOffset(iFrameIter) + strctSync.m_afScale(iFrameIter) * afTS(abRelevantTS);
+
+        afTransTS(abRelevantTS) =strctSync.m_afOffset(iFrameIter) +...
+            strctSync.m_afScale(iFrameIter) * afTS(abRelevantTS);
     end
     % Fix the ones that are outside the frames by doing extrapolation using
     % the first / last frames...
+    % ~~ not-in-abRelevantTS trials
     if sum(isnan(afTransTS)) > 0
         aiProblematicTS = find(isnan(afTransTS));
         for iIter=1:length(aiProblematicTS)
-            [fDummy, iSelectedFramemin]  = min(min(abs(strctSync.m_afEndFrameTS_Kofiko-afTS(aiProblematicTS(iIter))),abs(strctSync.m_afStartFrameTS_Kofiko-afTS(aiProblematicTS(iIter)))));
-                afTransTS(aiProblematicTS(iIter)) = strctSync.m_afOffset(iSelectedFramemin) + strctSync.m_afScale(iSelectedFramemin) * afTS(aiProblematicTS(iIter));
+            [fDummy, iSelectedFramemin]  = min( ...
+                min(abs(strctSync.m_afEndFrameTS_Kofiko-afTS(aiProblematicTS(iIter))), ...
+                abs(strctSync.m_afStartFrameTS_Kofiko-afTS(aiProblematicTS(iIter)))));
+
+                afTransTS(aiProblematicTS(iIter)) = strctSync.m_afOffset(iSelectedFramemin) +...
+                    strctSync.m_afScale(iSelectedFramemin) * afTS(aiProblematicTS(iIter));
         end
         % 
-%         fprintf('Warning, some time stamps may not have been transformed properly (sampling between plexon frames)\n');
+%         fprintf('Warning, some time stamps may not have been transformed properly
+%           (sampling between plexon frames)\n');
     end;
     
 else

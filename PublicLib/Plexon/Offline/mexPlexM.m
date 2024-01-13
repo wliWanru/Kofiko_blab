@@ -26,7 +26,7 @@ persistent PL_FileHeader PL_ChanHeader PL_EventHeader PL_SlowChannelHeader chan_
 persistent spike event ad fposmap
 
 debug = 0;
-try
+% try
 	if(nargin < 2)
 		disp('mexPlex requires a minimum of 2 input arguments, command_index and filename')
 		return
@@ -279,25 +279,25 @@ try
 	% clean up, should we really enforce this or only close on
 	fclose(fid)
 
-catch ME
-	% ME is a 'magic' object, so the name has to be ME... (MatlabException?)
-	disp ('Exception caught, cleaning up...');
-
-	% house keeping
-	fclose(fid);
-
-	% what went wrong?
-	if (debug),
-		ME
-		ME.message
-		ME.stack.file
-		ME.stack.name
-		ME.stack.line
-	end
-
-	% erm, what was it that went wrong, and where?
-	rethrow(ME);
-end
+% catch ME
+% 	% ME is a 'magic' object, so the name has to be ME... (MatlabException?)
+% 	disp ('Exception caught, cleaning up...');
+% 
+% 	% house keeping
+% 	fclose(fid);
+% 
+% 	% what went wrong?
+% 	if (debug),
+% 		ME
+% 		ME.message
+% 		ME.stack.file
+% 		ME.stack.name
+% 		ME.stack.line
+% 	end
+% 
+% 	% erm, what was it that went wrong, and where?
+% 	rethrow(ME);
+% end
 
 return
 

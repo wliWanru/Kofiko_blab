@@ -1,35 +1,35 @@
-function varargout = SpikeSorter(varargin)
-% SPIKESORTER M-file for SpikeSorter.fig
-%      SPIKESORTER, by itself, creates a new SPIKESORTER or raises the existing
+function varargout = SpikeSorter_standalone(varargin)
+% SPIKESORTER_STANDALONE M-file for SpikeSorter_standalone.fig
+%      SPIKESORTER_STANDALONE, by itself, creates a new SPIKESORTER_STANDALONE or raises the existing
 %      singleton*.
 %
-%      H = SPIKESORTER returns the handle to a new SPIKESORTER or the handle to
+%      H = SPIKESORTER_STANDALONE returns the handle to a new SPIKESORTER_STANDALONE or the handle to
 %      the existing singleton*.
 %
-%      SPIKESORTER('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in SPIKESORTER.M with the given input arguments.
+%      SPIKESORTER_STANDALONE('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in SPIKESORTER_STANDALONE.M with the given input arguments.
 %
-%      SPIKESORTER('Property','Value',...) creates a new SPIKESORTER or raises the
+%      SPIKESORTER_STANDALONE('Property','Value',...) creates a new SPIKESORTER_STANDALONE or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before SpikeSorter_OpeningFcn gets called.  An
+%      applied to the GUI before SpikeSorter_standalone_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to SpikeSorter_OpeningFcn via varargin.
+%      stop.  All inputs are passed to SpikeSorter_standalone_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help SpikeSorter
+% Edit the above text to modify the response to help SpikeSorter_standalone
 
-% Last Modified by GUIDE v2.5 10-Jan-2024 14:04:35
+% Last Modified by GUIDE v2.5 13-Jan-2024 18:05:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 0;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @SpikeSorter_OpeningFcn, ...
-                   'gui_OutputFcn',  @SpikeSorter_OutputFcn, ...
+                   'gui_OpeningFcn', @SpikeSorter_standalone_OpeningFcn, ...
+                   'gui_OutputFcn',  @SpikeSorter_standalone_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -46,15 +46,15 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before SpikeSorter is made visible.
-function SpikeSorter_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before SpikeSorter_standalone is made visible.
+function SpikeSorter_standalone_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to SpikeSorter (see VARARGIN)
+% varargin   command line arguments to SpikeSorter_standalone (see VARARGIN)
 
-% Choose default command line output for SpikeSorter
+% Choose default command line output for SpikeSorter_standalone
 handles.output = hObject;
 
 dbstop if error
@@ -77,72 +77,6 @@ set(handles.figure1,'CloseRequestFcn',@fnMyClose)
 setappdata(handles.figure1,'bControlDown',false);
 setappdata(handles.figure1,'bShiftDown',false);
 
-%% Read Raw units from plexon
-% strRawFolder = 'D:\Data\Doris\Electrophys\Houdini\Axial Probe\110616_161910\RAW\';
-% strRawFolder = 'D:\Data\Doris\Electrophys\Houdini\Targeting ML and PL 2011\New Recordings New Format\110613\RAW\';
-
-% attempt to load the sync file
-
-if isempty(varargin)
-    strRawFolder=uigetdir();
-%    aiInd = find(strRawFolder == filesep);
-    strSessionName = '';
-else
-    [strRawFolder,strSessionName] =fileparts( varargin{1});
-end
-set(handles.figure1,'Name', strSessionName);
-if strRawFolder(end) ~= filesep()
-    strRawFolder(end+1) = filesep();
-end
-strSyncFile = [strRawFolder,strSessionName,'-sync.mat'];
-if exist(strSyncFile,'file')
-    strctTmp = load(strSyncFile);
-    setappdata(handles.figure1,'strctSync',strctTmp.strctSync);
-else
-    setappdata(handles.figure1,'strctSync',[]);
-end
-
-setappdata(handles.figure1,'strRawFolder',strRawFolder);
-setappdata(handles.figure1,'strSessionName',strSessionName);
-
-bNoFiles = fnScanAndUpdateFileList(handles);
-if bNoFiles
-    delete(handles.figure1);
-    return;
-end;
-
-fnChangeChannel(handles);
-
-%fnInitializeFirstTime(handles,strRawFolder);
-    
-
-
-set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
-set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
-set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
-set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
-set(handles.figure1,'KeyPressFcn',@fnKeyDown);
-set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
-set(handles.figure1,'Units','pixels');
-set(handles.figure1,'UserData',handles);
-set(handles.hPCA,'Units','pixels');
-set(handles.hPCA,'visible','off');
-set(handles.hWaves,'visible','off');
-set(handles.hWaves,'Units','pixels','color',[0 0 0]);
-set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
-hold(handles.hPCA,'on');
-hold(handles.hWaves,'on');
-
-fnInvalidateIntervals(handles,true);
-fnInvalidatePCA(handles,false,true);
-% Update handles structure
-guidata(hObject, handles);
-
-
-
-
-% UIWAIT makes SpikeSorter wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
 
 
 
@@ -1822,7 +1756,7 @@ return;
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = SpikeSorter_OutputFcn(hObject, eventdata, handles) 
+function varargout = SpikeSorter_standalone_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1906,6 +1840,70 @@ function hOpenFile_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%% Read Raw units from plexon
+% strRawFolder = 'D:\Data\Doris\Electrophys\Houdini\Axial Probe\110616_161910\RAW\';
+% strRawFolder = 'D:\Data\Doris\Electrophys\Houdini\Targeting ML and PL 2011\New Recordings New Format\110613\RAW\';
+
+% attempt to load the sync file
+
+% if isempty(varargin)
+%     strRawFolder=uigetdir();
+% %    aiInd = find(strRawFolder == filesep);
+%     strSessionName = '';
+% else
+%     [strRawFolder,strSessionName] =fileparts( varargin);
+% end
+
+handles = guidata(hObject);
+
+strRawFolder = uigetdir();
+strSessionName = 'test_TuTu';
+set(handles.figure1,'Name', strSessionName);
+
+setappdata(handles.figure1,'strctSync',[]);
+% end
+
+setappdata(handles.figure1,'strRawFolder',strRawFolder);
+setappdata(handles.figure1,'strSessionName',strSessionName);
+
+% bNoFiles = fnScanAndUpdateFileList(handles);
+% if bNoFiles
+%     delete(handles.figure1);
+%     return;
+% end;
+
+fnChangeChannel(handles);
+
+%fnInitializeFirstTime(handles,strRawFolder);
+    
+
+
+set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
+set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
+set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
+set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
+set(handles.figure1,'KeyPressFcn',@fnKeyDown);
+set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
+set(handles.figure1,'Units','pixels');
+set(handles.figure1,'UserData',handles);
+set(handles.hPCA,'Units','pixels');
+set(handles.hPCA,'visible','off');
+set(handles.hWaves,'visible','off');
+set(handles.hWaves,'Units','pixels','color',[0 0 0]);
+set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
+hold(handles.hPCA,'on');
+hold(handles.hWaves,'on');
+
+fnInvalidateIntervals(handles,true);
+fnInvalidatePCA(handles,false,true);
+% Update handles structure
+guidata(hObject, handles);
+
+
+
+
+% UIWAIT makes SpikeSorter_standalone wait for user response (see UIRESUME)
+% uiwait(handles.figure1);
 
 
 
@@ -2110,17 +2108,17 @@ bSortedListActive = get(handles.hSorted,'value');
 
 if ~bSortedListActive
     % Load RAW File
-    acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
-    strSpikeFile = [strRawFolder,acFileNamesRAW{iSelectedFile}];
+%     acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
+    strSpikeFile = fullfile(strRawFolder, 'ao_extracted_F240111.mat');
     % Generate intervals
-    
 else
-   acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
-   strSortedUnitsPath = [strRawFolder,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
-   strSpikeFile = [strSortedUnitsPath,acFileNamesSorted{iSelectedFile}];
+%    acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
+%    strSortedUnitsPath = [strRawFolder,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
+%    strSpikeFile = [strSortedUnitsPath,acFileNamesSorted{iSelectedFile}];
+    error('not implemented');
 end
 setappdata(handles.figure1,'strSpikeFile',strSpikeFile);
-[astrctRawUnits, strctChannelInfo] = fnReadDumpSpikeFile(strSpikeFile);
+[astrctRawUnits, strctChannelInfo] = fnLoadMatSpikeFile(strSpikeFile);
 setappdata(handles.figure1,'strctChannelInfo',strctChannelInfo);
 
 iNumRawUnits = length(astrctRawUnits);

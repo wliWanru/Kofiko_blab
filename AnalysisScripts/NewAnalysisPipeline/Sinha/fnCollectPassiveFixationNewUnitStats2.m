@@ -144,7 +144,9 @@ fnWorkerLog('Passive fixation experiment. List: %s',strImageListDescrip);
 % ~~ strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer 
 % ~~ is (9, 21925)
 % ~~ why aiTrialIndices only contains 119 elements while whole Buffer
-%    contains 20000 + ???
+%    contains 20000 + ???  (maybe because only 119 in imlist_Cat list)
+
+% ~~ (1, 119), the picExamplar index for each recording trial
 aiStimulusIndex = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer(1,aiTrialIndices);
 
 afOnset_StimServer_TS = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.Buffer(2,aiTrialIndices);
@@ -297,8 +299,7 @@ fMaxTrialLengthMS = ceil(max(strctStimulusParams.m_afStimulusOFF_ALL_MS)+max(str
 % Find which image list was used and get the categories
 aiStimulusIndexValid = aiStimulusIndex(abValidTrials);
 
-%%
-
+%% ~~ load pre-defined params about time settings
 
 % Construct Peristimulus intervals 
 % ~~ -200 to 900
@@ -386,7 +387,7 @@ strctUnit.m_strctStatParams = strctConfig.m_strctParams;
 strctUnit.m_aiPeriStimulusRangeMS = aiPeriStimulusRangeMS;  % ~~ -200~900
 strctUnit.m_strctStimulusParams = strctStimulusParams;
 strctUnit.m_strctValidTrials = strctValidTrials;
-strctUnit.m_afISICenter = 0:50;  % ~~ ???
+strctUnit.m_afISICenter = 0:50;  % ~~ interspike interval
 
 % ~~ strctUnit.m_afSpikeTimes shpe is (63, 1)
 % ~~ hist bins diff(strctUnit.m_afSpikeTimes)*1e3 which is (62, 1) into 0:50 bins
@@ -410,10 +411,7 @@ if (bDiscardOFFperiodInMultipleRasters)
     %    fixation, 1) of 250
     % ~~ it seems aiMapToUnique: orginal(aiMapToUnique(idx)) =
     %             a2fUniquePresentationTimes(aiMapToUnique(idx))
-    % ~~~~~ maybe strctStimulusParams.m_afStimulusON_MS' means from which
-    %       sample points the stimulus started present? 
-    %       like the whole sampling range is -200 to 900, 
-    %       from  **the sample point 250**, the stimulus started to present
+    % ~~ strctStimulusParams.m_afStimulusON_MS' means stimulus present 250 ms from 0
     [a2fUniquePresentationTimes, ~, aiMapToUnique] = unique( ...
         [strctStimulusParams.m_afStimulusON_MS'],'rows');
 else
@@ -423,19 +421,19 @@ end
 iNumUnique = size(a2fUniquePresentationTimes,1);
 aiValidTrials = find(abValidTrials);  % ~~ indices of validTrial
 
-% ~~ to find if any not-synchronized stimulusON time? like random ISI (or SOA) ?????
-% ~~ maybe the following is to create multiple raster plot considering different
-%    stimulus on time
-% ~~ or to correct (align) to a same starting time 
+% ~~ to find if any non 250 ms presenting trials 
 if iNumUnique> 1
     aiNumPresentations = histc(aiMapToUnique,1:iNumUnique);
     aiValidLongPresentations = find(aiNumPresentations > 20);
     iNumSubRasters = length(aiValidLongPresentations);
     for iRasterIter=1:iNumSubRasters
         fTrialLengthMS = sum(a2fUniquePresentationTimes(aiValidLongPresentations(iRasterIter),:));
-        aiTimeRange = 1:find(strctUnit.m_aiPeriStimulusRangeMS >= (fTrialLengthMS+strctConfig.m_strctParams.m_iAfterMS),1,'first');
-        strctUnit.m_astrctRaster(iRasterIter).m_aiTimeRange = strctUnit.m_aiPeriStimulusRangeMS(aiTimeRange);
-        strctUnit.m_astrctRaster(iRasterIter).m_fON_MS = a2fUniquePresentationTimes(aiValidLongPresentations(iRasterIter),1);
+        aiTimeRange = 1:find(strctUnit.m_aiPeriStimulusRangeMS >=...
+            (fTrialLengthMS+strctConfig.m_strctParams.m_iAfterMS),1,'first');
+        strctUnit.m_astrctRaster(iRasterIter).m_aiTimeRange = ...
+            strctUnit.m_aiPeriStimulusRangeMS(aiTimeRange);
+        strctUnit.m_astrctRaster(iRasterIter).m_fON_MS = ...
+            a2fUniquePresentationTimes(aiValidLongPresentations(iRasterIter),1);
         if (bDiscardOFFperiodInMultipleRasters)
             strctUnit.m_astrctRaster(iRasterIter).m_fOFF_MS = [];
         else
@@ -472,10 +470,11 @@ end
 % end
 
 strctUnit.m_a2bRaster_Valid = a2bRaster(abValidTrials,:) > 0;
-strctUnit.m_afStimulusONTime = afModifiedStimulusON_TS_Plexon(abValidTrials);
+ % ~~ stimulus time of valid trials
+strctUnit.m_afStimulusONTime = afModifiedStimulusON_TS_Plexon(abValidTrials); 
 strctUnit.m_afStimulusONTimeAll = afModifiedStimulusON_TS_Plexon;
 
-strctUnit.m_aiStimulusIndexValid = aiStimulusIndexValid;
+strctUnit.m_aiStimulusIndexValid = aiStimulusIndexValid;  % pic indices
 strctUnit.m_aiStimulusIndex = aiStimulusIndex;
 
 strctUnit.m_aiTrialIndex = aiTrialIndices;
@@ -487,6 +486,8 @@ if ~isfield( strctConfig.m_strctParams,'m_bGaussianSmoothing')
     strctConfig.m_strctParams.m_bGaussianSmoothing = true;
 end;
 
+% ~~ [a2fAvg, a2fStd, aiCount] = fnAverageBy( ...
+%     a2bRaster, aiStimulusIndex, a2bStimulusCategory, iAvgLen, bGaussian)
 strctUnit.m_a2fAvgFirintRate_Stimulus  = 1e3 * fnAverageBy(strctUnit.m_a2bRaster_Valid, ...
     aiStimulusIndexValid, diag(1:iNumStimuli)>0,strctConfig.m_strctParams.m_iTimeSmoothingMS,...
     strctConfig.m_strctParams.m_bGaussianSmoothing);
@@ -498,7 +499,10 @@ if ~isempty(a2bStimulusToCondition)
 else
     strctUnit.m_a2fAvgFirintRate_Category = [];
 end
+
 strctUnit.m_afAvgFirintRate_Stimulus = mean(strctUnit.m_a2fAvgFirintRate_Stimulus(:, iStartAvg:iEndAvg),2);
+% ~~ this afBaseline is for spike count, for every picCat (96)
+% ~~ all firing rate counts of 0 ms to 50 ms (200 to 251 timepoints)
 strctUnit.m_afBaseline = mean(strctUnit.m_a2fAvgFirintRate_Stimulus (:, iStartBaselineAvg:iEndBaselineAvg),2);
 strctUnit.m_fAvgBaseline = mean(strctUnit.m_afBaseline);
 
@@ -511,12 +515,16 @@ strctUnit.m_a2bStimulusToCondition = a2bStimulusToCondition;
 
 if isfield(strctConfig.m_strctParams,'m_bSubtractBaseline') && strctConfig.m_strctParams.m_bSubtractBaseline
     % ~~~~~~~~~~~~~~~ apply Gaussian smoothing ~~~~~~~~~~~~~~~~~~~
+    % ~~ it seems strctUnit.m_a2fAvgFirintRate_Stimulus is already gaussian smoothed results
+    % ~~ and used the same params with a2fSmoothRaster
+    % ~~~ this is to find afResponse which is mean spike count for every trial (115)
     afSmoothingKernelMS = fspecial( ...
-        'gaussian',[1 7*strctConfig.m_strctParams.m_iTimeSmoothingMS],strctConfig.m_strctParams.m_iTimeSmoothingMS);
+        'gaussian',[1 7*strctConfig.m_strctParams.m_iTimeSmoothingMS], ...
+        strctConfig.m_strctParams.m_iTimeSmoothingMS);
     a2fSmoothRaster = conv2(double(strctUnit.m_a2bRaster_Valid),afSmoothingKernelMS ,'same');
     afResponse = mean(a2fSmoothRaster(:,iStartAvg:iEndAvg),2);
 
-    % ~~~~~~~~~~~~~~~ apply baseline correction ~~~~~~~~~~~~~~~~~~~
+    % ~~~~~~~~~~~~~~~ apply baseline correction for each **recording trial** ~~~~~~~~~~~~~~~~~
     strctUnit.m_afBaselineRes = mean(a2fSmoothRaster(:,iStartBaselineAvg:iEndBaselineAvg),2);
     strctUnit.m_afStimulusResponseMinusBaseline = afResponse-strctUnit.m_afBaselineRes;
     % Now average according to stimulus !
@@ -534,7 +542,7 @@ if isfield(strctConfig.m_strctParams,'m_bSubtractBaseline') && strctConfig.m_str
         end;
     end
     
-    % ~~~~~~~~~~~~~~~ arranged all trials to every category ~~~~~~~~~~~~~~~~~~~
+    % ~~~~~~~~~~~~~~~ arranged all trials to every category (baseline corrected) ~~~~~~~~~~~~~~~~
     strctUnit.m_afAvgFiringRateCategory = ones(1,strctUnit.m_iNumCategories)*NaN;
     for iCatIter=1:strctUnit.m_iNumCategories
         abSamplesCat = ismember( ...
@@ -559,11 +567,11 @@ if isfield(strctConfig.m_strctParams,'m_bSubtractBaseline') && strctConfig.m_str
         afSamplesCat1 = strctUnit.m_afStimulusResponseMinusBaseline(abSamplesCat1);
         if sum(abSamplesCat1) > 0
             
-            for iCat2=iCat1+1:strctUnit.m_iNumCategories
+            for iCat2=iCat1+1:strctUnit.m_iNumCategories  % 2~6
                 abSamplesCat2 = ismember(strctUnit.m_aiStimulusIndexValid, find(a2bStimulusToCondition(:, iCat2)));
                 if sum(abSamplesCat2) > 0
                     afSamplesCat2 = strctUnit.m_afStimulusResponseMinusBaseline(abSamplesCat2);
-                    p = ranksum(afSamplesCat1,afSamplesCat2);
+                    p = ranksum(afSamplesCat1,afSamplesCat2);  % Wilcoxon rank sum test
                     strctUnit.m_a2fPValueCat(iCat1,iCat2) = p;
                     strctUnit.m_a2fPValueCat(iCat2,iCat1) = p;
                 end
@@ -580,14 +588,18 @@ if isfield(strctConfig.m_strctParams,'m_bSubtractBaseline') && strctConfig.m_str
         end
     end
     
-else  % ~~ if no need of m_bSubtractBaseline
+else  % ~~ if never applied baseline correction
+      % ~~ in the test we need to calc baseline for each category and then perform 
+      % ~~ ranksum between cat and its baseline as the last row/col stats
     [strctUnit.m_a2fPValueCat] = ...
         fnStatisticalTestBy(strctUnit.m_a2bRaster_Valid, aiStimulusIndexValid, a2bStimulusToCondition,...
         iStartAvg,iEndAvg,iStartBaselineAvg,iEndBaselineAvg);
 end
 
 % ~~ why here exists this m_afRecordingRange ????? 
-strctUnit.m_afRecordingRange = [min(strctInterval.m_a2fAdvancerPositionTS_Plexon(2,:)),
+% ~~ because in the fnDisplaySimpleStim, 
+% ~~ this is the Recording Depth near the rasterplot! 
+strctUnit.m_afRecordingRange = [min(strctInterval.m_a2fAdvancerPositionTS_Plexon(2,:)),...
     max(strctInterval.m_a2fAdvancerPositionTS_Plexon(2,:))];
 
 
@@ -598,7 +610,8 @@ if strctConfig.m_strctParams.m_bIncludeLFP_PerGroup || ...
     % ~~~ strctInterval.m_strAnalogChannelFile is 150924_155226_Rocco-LFP01.raw
     % Sample LFPs
     iNumTrials = length(abValidTrials);
-    a2fSampleTimes = zeros(iNumTrials, length(aiPeriStimulusRangeMS));
+    % ~~ time for each point each trial
+    a2fSampleTimes = zeros(iNumTrials, length(aiPeriStimulusRangeMS));  
     for iTrialIter = 1:iNumTrials
         a2fSampleTimes(iTrialIter,:) = ...
             afModifiedStimulusON_TS_Plexon(iTrialIter)+ aiPeriStimulusRangeMS/1e3;
@@ -746,7 +759,9 @@ if ~exist(strEyeXfile,'file') || ~exist(strEyeYfile,'file')
 end;
 [strctEyeX, afPlexonTime] = fnReadDumpAnalogFile( ...
     strEyeXfile,'Interval',[strctInterval.m_fStartTS_Plexon,strctInterval.m_fEndTS_Plexon]);
-strctEyeY = fnReadDumpAnalogFile(strEyeYfile,'Interval',[strctInterval.m_fStartTS_Plexon,strctInterval.m_fEndTS_Plexon]);
+strctEyeY = fnReadDumpAnalogFile( ...
+    strEyeYfile,'Interval',[strctInterval.m_fStartTS_Plexon,strctInterval.m_fEndTS_Plexon]);
+
 iNumSamplesInInterval = length(afPlexonTime);
 fSamplingFreq = strctEyeX.m_fSamplingFreq;
 % 1. Eye position in pixel coordinates.
@@ -765,7 +780,8 @@ afEyeYraw =  strctEyeY.m_afData;
 % 1.2 Gain, Offset, Fixation Spot and Rect, all obtained from Kofiko and
 % aligned to Plexon time frame:
 apt2fFixationSpot = fnTimeZoneChangeTS_Resampling( ...
-    strctKofiko.g_astrctAllParadigms{iParadigmIndex}.FixationSpotPix, 'Kofiko','Plexon',afPlexonTime, strctSync);
+    strctKofiko.g_astrctAllParadigms{iParadigmIndex}.FixationSpotPix, ...
+    'Kofiko','Plexon',afPlexonTime, strctSync);
 
 afStimulusSizePix = fnTimeZoneChangeTS_Resampling( ...
     strctKofiko.g_astrctAllParadigms{iParadigmIndex}.StimulusSizePix, 'Kofiko','Plexon',afPlexonTime, strctSync);

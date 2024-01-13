@@ -18,7 +18,7 @@ while 1
     
     if ~bMerged
         break;
-    end;
+    end;    
 end;
 
 return;

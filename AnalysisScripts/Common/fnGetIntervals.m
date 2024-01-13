@@ -22,7 +22,9 @@ if isempty(aiStart)
     aiEnd =[];
     return;
 end;
+
 aiEnd = find(afDiff == -1) -1;
+
 aiLength = aiEnd-aiStart+1;
 
 for k=1:length(aiStart)

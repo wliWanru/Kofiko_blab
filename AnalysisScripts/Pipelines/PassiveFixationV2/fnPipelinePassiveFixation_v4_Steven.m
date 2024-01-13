@@ -53,8 +53,10 @@ ck=[];
 bk=[];
 bk=strctPhotodiode.m_afData > fPhotodiodeThreshold;  % ~~ all which above thresh
 ck=strctPhotodiode.m_afData > fPhotodiodeThreshold;  % ~~ all which above thresh
+
+% ~~ 
 for i=1:length(bk)-1
-    if bk(i)==1 && bk(i+1)==0
+    if bk(i)==1 && bk(i+1)==0  % ~~ this i is a switching point (from 1 to 0)
         ck(i:i+134)=1;  % ~~ what's 134 here?????? 
     end
 end
@@ -69,11 +71,14 @@ astrctPhotodiodeEventsWithJitter = fnGetIntervals(ck);
 % two..., since we usually don't display things that fast).
 
 % ~~ 0.5 ms between 2 analog signal? 
-% ~~ could be sampling rate.. 1000 / 0.5 = 2000 Hz 
+% ~~ could be sampling rate.. 1000 / 0.5 = 2000 Hz;
+% ~~ is consistent with strctPhotodiode.m_fSamplingFreq  
 iDistanceBetweenSamplesMS = 1e3*(afTime(2)-afTime(1));  
 
 % ~~ strctKofiko.g_strctStimulusServer.m_fRefreshRateMS is 10 ms refershRate
-% ~~ iMergeInterval is 40 ( 2 * 10 / 0.5) 
+% ~~ iMergeInterval is 40 = ( 2 * 10 / 0.5) ; why 2 * ???? 
+% ~~ 2 maybe just because they want some relatively suitable threshold number
+% ~~ as the author says "we merge nearby intervals that are shroter than refresh rate or two"
 iMergeInterval = ceil(2*strctKofiko.g_strctStimulusServer.m_fRefreshRateMS / iDistanceBetweenSamplesMS);
 astrctPhotodiodeEvents = fnMergeIntervals(astrctPhotodiodeEventsWithJitter,iMergeInterval);
 
