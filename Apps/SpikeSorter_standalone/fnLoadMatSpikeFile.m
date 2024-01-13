@@ -1,4 +1,4 @@
-function [astrctRawUnits,strctChannelInfo] = fnLoadMatSpikeFile(strInputFile, varargin)
+function [astrctRawUnits,strctChannelInfo, astrctAnnotatedIntervals] = fnLoadMatSpikeFile(strInputFile, varargin)
 
 ao = load(strInputFile).('ao');
 ao_SEG = ao.SEG; 
@@ -13,6 +13,6 @@ end
 
 
 strctChannelInfo = ao.strctChannelInfo;
-
+astrctAnnotatedIntervals = ao.active_unit_info;
 
 return;
