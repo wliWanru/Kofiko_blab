@@ -1026,9 +1026,9 @@ if ~isempty(strctAdvancer) && bForceRedraw
 
 end
 
-if bMoveTimeAxis
-    set(handles.hTimeLine,'xlim',[strctGUIParams.m_afTimeRange(1),strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
-end
+% if bMoveTimeAxis
+%     set(handles.hTimeLine,'xlim',[strctGUIParams.m_afTimeRange(1),strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
+% end
 
 return;
 
@@ -1844,16 +1844,6 @@ setappdata(handles.figure1,'bShiftDown',false);
 %% Read Raw units from plexon
 % strRawFolder = 'D:\Data\Doris\Electrophys\Houdini\Axial Probe\110616_161910\RAW\';
 % strRawFolder = 'D:\Data\Doris\Electrophys\Houdini\Targeting ML and PL 2011\New Recordings New Format\110613\RAW\';
-
-% attempt to load the sync file
-
-% if isempty(varargin)
-%     strRawFolder=uigetdir();
-% %    aiInd = find(strRawFolder == filesep);
-%     strSessionName = '';
-% else
-%     [strRawFolder,strSessionName] =fileparts( varargin);
-% end
 
 handles = guidata(hObject);
 
