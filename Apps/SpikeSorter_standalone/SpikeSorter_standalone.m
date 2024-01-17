@@ -1317,7 +1317,8 @@ iNumPtsY = 200;
 afRangeX = linspace(strctGUIParams.m_afRangePCA(1),strctGUIParams.m_afRangePCA(2),iNumPtsX);
 afRangeY = linspace(strctGUIParams.m_afRangePCA(3),strctGUIParams.m_afRangePCA(4),iNumPtsY);
 
-afRangeXwave = [1 40];
+% -- previous 40 for 32 length waveform
+afRangeXwave = [1 100];
 
 
 
@@ -1401,7 +1402,8 @@ for iIter=1:iNumUnitsInRange
     end
 
     a3fColorDist = min(1,max(a3fColorDist, + sqrt(a3fColorDistUnit)));
-    a2fColorWavePlot = min(1,max(a2fColorWavePlot, + sqrt(a3fColorWaveUnit)));
+    % -- max() prevents zero; min() prevents above 1 (color overflow)
+    a2fColorWavePlot = min(1,max(a2fColorWavePlot, + sqrt(a3fColorWaveUnit)));  
     %ahWaves = [ahWaves; plot(handles.hWaves,1:40,a3fWaves(1:aiNumWaves(iIter),:,iIter),'color',afColor)];
 
 
@@ -1420,12 +1422,16 @@ if bForceRedraw
     end;
 end
 
-if isempty(hWaves)
-    hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
-    setappdata(handles.figure1,'hWaves',hWaves);
-else
-    set(hWaves,'cdata', a2fColorWavePlot);
-end
+% if isempty(hWaves)
+%     hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
+%     setappdata(handles.figure1,'hWaves',hWaves);
+% else
+%     set(hWaves,'cdata', a2fColorWavePlot);
+% end
+
+hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
+setappdata(handles.figure1,'hWaves',hWaves);
+
 % if bMicroVoltsWaveforms
 set (handles.hWaves,'ylim',afRangeYwave);
 % else
@@ -1848,7 +1854,7 @@ setappdata(handles.figure1,'bShiftDown',false);
 handles = guidata(hObject);
 
 strRawFolder = uigetdir();
-strSessionName = 'test_TuTu';
+strSessionName = fnGetMlSessionName(strRawFolder, '.bhv2');
 set(handles.figure1,'Name', strSessionName);
 
 setappdata(handles.figure1,'strctSync',[]);
@@ -1915,7 +1921,7 @@ else
     % Raw unit. save files under processed
     % Was this an unsorted file or not ?
     strOutputPath = [strPath,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
-    strOutFileName = fullfile(strOutputPath,[strFile,'_sorted.raw']);
+    strOutFileName = fullfile(strOutputPath,[strFile,'_sorted.mat']);
     fnScanAndUpdateFileList(handles);
 end
 
@@ -1960,15 +1966,19 @@ astrctSpikes(iNumIntervals+1).m_iUnitIndex = 0;
 astrctSpikes(iNumIntervals+1).m_afInterval = [min(afUnsortedTS), max(afUnsortedTS)];
 astrctSpikes(iNumIntervals+1).m_afTimestamps = afUnsortedTS;
 astrctSpikes(iNumIntervals+1).m_a2fWaveforms = a2fSortedAllWaveForms(aiSpikeToUniqueID == 0,:);
+
+
 if exist(strOutFileName,'file')
     [strF,strP]=uiputfile(strOutFileName);
     if strF(1) ~= 0
-        fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, [strP,strF]);
+        fnSaveMatSpikeFile(strSpikeFile, strctChannelInfo, astrctSpikes, [strP,strF]);
+%         fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, [strP,strF]);
     else
         return;
     end
 else
-    fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, strOutFileName);
+%     fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, strOutFileName);
+    fnSaveMatSpikeFile(strSpikeFile, strctChannelInfo, astrctSpikes, strOutFileName);
 end
 % Discard undo
 setappdata(handles.figure1,'acUndoOperations',{});
@@ -2100,7 +2110,10 @@ bSortedListActive = get(handles.hSorted,'value');
 if ~bSortedListActive
     % Load RAW File
     %     acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
-    strSpikeFile = fullfile(strRawFolder, 'ao_extracted_F240111.mat');
+%     strSpikeFile = fullfile(strRawFolder, 'ao_extracted_F240111.mat');
+    [tmp_fname, tmp_fpath, ~]= uigetfile(strRawFolder);
+    strSpikeFile = fullfile(tmp_fpath, tmp_fname);
+
     % Generate intervals
 else
     %    acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
