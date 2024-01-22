@@ -35,7 +35,7 @@ function table = read_interval_txt(filename)
         end
 
         % Extract numbers from the line
-        nums = sscanf(line, '%*s %d %*s %d at %d');
+        nums = sscanf(line, '%*s %d %*s %d at %f');
 
         % Fill in the table
         table(i, :) = [state, nums'];

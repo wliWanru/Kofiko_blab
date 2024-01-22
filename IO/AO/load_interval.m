@@ -21,6 +21,8 @@ for iEntryIter=1:NumEntries
 
         astrctUnitIntervals(iIntervalCounter).m_fEndTp_AO_origin = NaN;
         astrctUnitIntervals(iIntervalCounter).m_fEndTS_AO = NaN;
+
+        
         astrctUnitIntervals(iIntervalCounter).m_bStillOpen = true;
     else
         % Old interval closed.
@@ -51,11 +53,23 @@ for iEntryIter=1:NumEntries
                 astrctUnitIntervals(iOpenInterval).m_bStillOpen = false;
             end
         end
-
-
     end
-
 end
+
+
+%% 
+% Check each interval for an NaN end time and assign the next interval's start time if necessary
+for iInterval = 1:iIntervalCounter
+    if isnan(astrctUnitIntervals(iInterval).m_fEndTp_AO_origin)
+        if iInterval < iIntervalCounter
+            astrctUnitIntervals(iInterval).m_fEndTp_AO_origin = astrctUnitIntervals(iInterval + 1).m_fStartTp_AO_origin;
+            astrctUnitIntervals(iInterval).m_fEndTS_AO = astrctUnitIntervals(iInterval + 1).m_fStartTS_AO;
+        else
+            warning('Warning: Last interval does not have an end time. Leaving as NaN.\n');
+        end
+    end
+end
+
 
 astrctUnitIntervals = rmfield(astrctUnitIntervals,'m_bStillOpen');
 

@@ -1,4 +1,4 @@
-function fnPipelinePassiveFixation_v2(strctInputs)
+function fnPipelinePassiveFixation_AO(strctInputs)
 clear global g_acDesignCache
 
 strDataRootFolder = strctInputs.m_strDataRootFolder;
@@ -12,13 +12,17 @@ fnWorkerLog('Starting passive fixation standard analysis pipline...');
 fnWorkerLog('Session : %s',strSession);
 fnWorkerLog('Data Root : %s',strDataRootFolder);
 
-strRawFolder = [strDataRootFolder,'RAW',filesep()];
-strKofikoFile = fullfile(strRawFolder,[strSession,'.mat']);
-strAdvancerFile = fullfile(strRawFolder,[strSession,'-Advancers.txt']);
-strStatServerFile = fullfile(strRawFolder,[strSession,'-StatServerInfo.mat']);
-strStrobeFile = fullfile(strRawFolder,[strSession,'-strobe.raw']);
-strAnalogFile = fullfile(strRawFolder,[strSession,'-EyeX.raw']);  % any can suffice...
-strSyncFile = fullfile(strRawFolder,[strSession,'-sync.mat']);
+strRawFolder = fullfile(strDataRootFolder,'RAW');
+% strKofikoFile = fullfile(strRawFolder,[strSession,'.mat']);
+% strAdvancerFile = fullfile(strRawFolder,[strSession,'-Advancers.txt']);
+% strStatServerFile = fullfile(strRawFolder,[strSession,'-StatServerInfo.mat']);
+% strStrobeFile = fullfile(strRawFolder,[strSession,'-strobe.raw']);
+% strAnalogFile = fullfile(strRawFolder,[strSession,'-EyeX.raw']);  % any can suffice...
+% strSyncFile = fullfile(strRawFolder,[strSession,'-sync.mat']);
+
+[tmp_fname, tmp_fpath]= uigetfile(strRawFolder);
+strRawFile = fullfile(tmp_fpath, tmp_fname); 
+
 strConfigFile = [strConfigFolder,'AnalysisPipelines',filesep, 'PipelineNewPassiveFixation.xml'];
 
 
@@ -28,13 +32,13 @@ if ~exist(strOutputFolder,'dir')
 end;
 
 %% Verify everything is around.
-fnCheckForFilesExistence({strKofikoFile, strAdvancerFile, strStatServerFile,...
-    strStrobeFile,strAnalogFile,strSyncFile,strConfigFile});
+% fnCheckForFilesExistence({strKofikoFile, strAdvancerFile, strStatServerFile,...
+%     strStrobeFile,strAnalogFile,strSyncFile,strConfigFile});
 
-% Load needed information to do processing
-load(strSyncFile);
-strctKofiko = load(strKofikoFile);
-strctStatServer = load(strStatServerFile);
+% % Load needed information to do processing
+% load(strSyncFile);
+% strctKofiko = load(strKofikoFile);
+% strctStatServer = load(strStatServerFile);
 
 %%
 strctConfig = fnMyXMLToStruct(strConfigFile);
