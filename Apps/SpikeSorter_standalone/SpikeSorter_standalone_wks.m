@@ -53,75 +53,7 @@ function SpikeSorter_standalone_OpeningFcn(hObject, eventdata, handles, varargin
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to SpikeSorter_standalone (see VARARGIN)
-handles.output = hObject;
 
-dbstop if error
-
-hIntervalMenu = uicontextmenu;
-itemm0 = uimenu(hIntervalMenu, 'Label', 'Squeeze Interval', 'Callback', {@fnSqueezeInterval,handles});
-item0 = uimenu(hIntervalMenu, 'Label', 'Split', 'Callback', {@fnSplitUnit,handles});
-item1 = uimenu(hIntervalMenu, 'Label', 'Delete', 'Callback', {@fnDeleteInterval,handles});
-item2 = uimenu(hIntervalMenu, 'Label', 'Merge', 'Callback', {@fnMergeIntervals,handles});
-item3 = uimenu(hIntervalMenu, 'Label', 'Remove All Spikes', 'Callback', {@fnClearUnitSpikes,handles});
-item4 = uimenu(hIntervalMenu, 'Label', 'Clean Outliers', 'Callback', {@fnCleanUnitSpikes,handles});
-item5 = uimenu(hIntervalMenu, 'Label', 'Change Color', 'Callback', {@fnChangeUnitColor,handles});
-item6 = uimenu(hIntervalMenu, 'Label', 'Toggle Visible', 'Callback', {@fnToggleVisibility,handles});
-hIntervalMenu2 = uicontextmenu;
-item1 = uimenu(hIntervalMenu2, 'Label', 'New Interval', 'Callback', {@fnAddNewInterval,handles});
-setappdata(handles.figure1,'hIntervalMenu',hIntervalMenu);
-setappdata(handles.figure1,'hIntervalMenu2',hIntervalMenu2);
-set(handles.figure1,'CloseRequestFcn',@fnMyClose)
-
-setappdata(handles.figure1,'bControlDown',false);
-setappdata(handles.figure1,'bShiftDown',false);
-if isempty(varargin)
-    strRawFolder=uigetdir();
-    %    aiInd = find(strRawFolder == filesep);
-    strSessionName = '';
-else
-    [strRawFolder,strSessionName,ext] =fileparts( varargin{1});
-end
-setappdata(handles.figure1,'strSpikeFile',varargin{1});
-setappdata(handles.figure1,'strRawFolder',strRawFolder);
-setappdata(handles.figure1,'strSessionName',strSessionName);
-
-bNoFiles = fnScanAndUpdateFileList(handles);
-if bNoFiles
-    delete(handles.figure1);
-    return;
-end;
-if ~isfile(varargin{1})
-    delete(handles.figure1);
-    return;
-end
-
-
-fnChangeChannel(handles);
-
-%fnInitializeFirstTime(handles,strRawFolder);
-
-
-
-set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
-set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
-set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
-set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
-set(handles.figure1,'KeyPressFcn',@fnKeyDown);
-set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
-set(handles.figure1,'Units','pixels');
-set(handles.figure1,'UserData',handles);
-set(handles.hPCA,'Units','pixels');
-set(handles.hPCA,'visible','off');
-set(handles.hWaves,'visible','off');
-set(handles.hWaves,'Units','pixels','color',[0 0 0]);
-set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
-hold(handles.hPCA,'on');
-hold(handles.hWaves,'on');
-
-fnInvalidateIntervals(handles,true);
-fnInvalidatePCA(handles,false,true);
-% Update handles structure
-guidata(hObject, handles);
 
 
 
@@ -454,9 +386,9 @@ if fnInsideRect(pt2fMouse,aiTimelineRect)
     strctGUIParams = getappdata(handles.figure1,'strctGUIParams');
     Tmp=get(handles.hTimeLine,'CurrentPoint');
     fZoomAtTimePoint = Tmp(1);
-    
+
     fCurrentZoom = strctGUIParams.m_afTimeRange(2)-strctGUIParams.m_afTimeRange(1);
-    
+
     if  eventdata.VerticalScrollCount < 0
         strctGUIParams.m_afTimeRange(1) = fZoomAtTimePoint-fCurrentZoom * 1.5;
         strctGUIParams.m_afTimeRange(2) = fZoomAtTimePoint+fCurrentZoom * 1.5;
@@ -465,61 +397,63 @@ if fnInsideRect(pt2fMouse,aiTimelineRect)
         strctGUIParams.m_afTimeRange(2) = fZoomAtTimePoint+fCurrentZoom * 0.5;
     end
     afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
-    
+
     astrctIntervals =  fnGetIntervals(handles);
     if ~isempty(astrctIntervals)
         fMaxIntervalTS = max(cat(1,astrctIntervals.m_fEndTS_Plexon));
     else
         fMaxIntervalTS = -Inf;
     end
-    
+
     strctGUIParams.m_afTimeRange(1) = max(0, strctGUIParams.m_afTimeRange(1));
     strctGUIParams.m_afTimeRange(2) = min(max(fMaxIntervalTS, afSortedAllTS(end)), strctGUIParams.m_afTimeRange(2));
-    
+
     if strctGUIParams.m_afTimeRange(2)-strctGUIParams.m_afTimeRange(1) > 60 * 10
         % Move viewing interval
         fViewingLength = astrctIntervals(1).m_fEndTS_Plexon - astrctIntervals(1).m_fStartTS_Plexon;
         % New viewing center
         astrctIntervals(1).m_fStartTS_Plexon = fZoomAtTimePoint-fViewingLength/2;
         astrctIntervals(1).m_fEndTS_Plexon = fZoomAtTimePoint+fViewingLength/2;
-        
+
         fnUpdateIntervals(handles,astrctIntervals,true);
         setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
         fnInvalidateIntervals(handles,true);
-        
+
     end
-    
+
 elseif fnInsideRect(pt2fMouse,aiPCARect)
     Tmp=get(handles.hPCA,'CurrentPoint');
-    pt2fZoomAtPoint = [0 0];
+    pt2fZoomAtPoint = round(Tmp(1,1:2));
+
     strctGUIParams = getappdata(handles.figure1,'strctGUIParams');
-    
+
     if  eventdata.VerticalScrollCount < 0
         fScale = 1.1;
     else
         fScale = 0.9;
     end;
-    
-    
+
+
     a2fPCA = getappdata(handles.figure1,'a2fPCA');
     fMinX = min(a2fPCA(:,1));
     fMaxX = max(a2fPCA(:,1));
     fMinY = min(a2fPCA(:,2));
     fMaxY = max(a2fPCA(:,2));
-    
+
     fXZoom = fScale*(strctGUIParams.m_afRangePCA(2)-strctGUIParams.m_afRangePCA(1));
     fYZoom = fScale*(strctGUIParams.m_afRangePCA(4)-strctGUIParams.m_afRangePCA(3));
-    
-    
+
+
     strctGUIParams.m_afRangePCA = [...
         min(fMaxX, max(fMinX,pt2fZoomAtPoint(1) - fXZoom/2)),...
         max(fMinX, min(fMaxX,pt2fZoomAtPoint(1) + fXZoom/2)),...
         min(fMaxY, max(fMinY,pt2fZoomAtPoint(2) - fYZoom/2)),...
         max(fMinY, min(fMaxY,pt2fZoomAtPoint(2) + fYZoom/2))];
-    
+
+
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     fnInvalidatePCA(handles,false,true);
-    
+
 elseif fnInsideRect(pt2fMouse,aiWaveRect)
     % fprintf('Inside Wave rect\n');
 end
@@ -1017,12 +951,11 @@ return;
 function fnInvalidateIntervalsAux(handles,astrctUnitIntervals,bMoveTimeAxis,bForceRedraw)
 strctGUIParams=getappdata(handles.figure1,'strctGUIParams');
 afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
-% % if ~isempty(astrctUnitIntervals)
-% %     fZero = max(0,min([afSortedAllTS(1); cat(1,astrctUnitIntervals.m_fStartTS_Plexon)]));
-% % else
-fZero = afSortedAllTS(1);
-% end
-
+if ~isempty(astrctUnitIntervals)
+    fZero = max(0,min([afSortedAllTS(1); cat(1,astrctUnitIntervals.m_fStartTS_Plexon)]));
+else
+    fZero = afSortedAllTS(1);
+end
 
 iNumIntervals = length(astrctUnitIntervals);
 fHeight=0.2;
@@ -1056,7 +989,6 @@ if isempty(ahIntervalPatch) || bForceRedraw
 
             end
         end
-        %handles.hTimeLine.XAxis.Exponent = 0;
     end
     setappdata(handles.figure1,'ahIntervalPatch',ahIntervalPatch);
     setappdata(handles.figure1,'ahIntervalText',ahIntervalText);
@@ -1094,21 +1026,9 @@ if ~isempty(strctAdvancer) && bForceRedraw
 
 end
 
-% ---------------- important for scrolling --------------------
-if bMoveTimeAxis
-    set(handles.hTimeLine,'xlim',[strctGUIParams.m_afTimeRange(1),strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
-end
-
-if bMoveTimeAxis
-    set(handles.hTimeLine,'xlim',[max(0, strctGUIParams.m_afTimeRange(1)-fZero), max(0, strctGUIParams.m_afTimeRange(2)-fZero)+0.01],'ylim',[0 iMaxHeight+fHeight] );
-end
-
 % if bMoveTimeAxis
-%     set(handles.hTimeLine,'xlim',[max(0, strctGUIParams.m_afTimeRange(1)), strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
+%     set(handles.hTimeLine,'xlim',[strctGUIParams.m_afTimeRange(1),strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
 % end
-% disp(strctGUIParams.m_afTimeRange);
-% ---------------- important for scrolling --------------------
-
 
 return;
 
@@ -1398,7 +1318,7 @@ afRangeX = linspace(strctGUIParams.m_afRangePCA(1),strctGUIParams.m_afRangePCA(2
 afRangeY = linspace(strctGUIParams.m_afRangePCA(3),strctGUIParams.m_afRangePCA(4),iNumPtsY);
 
 % -- previous 40 for 32 length waveform
-afRangeXwave = [1 40];
+afRangeXwave = [1 100];
 
 
 
@@ -1412,7 +1332,7 @@ a3fCov = zeros(2,2,iNumUnitsInRange);
 a3fWaves = zeros(iNumPtsY,iNumPtsX,iNumUnitsInRange);
 
 if isempty(a2fReducedWaves)
-    afRangeYwave = [-0.14 0.14];
+    afRangeYwave = [-0.1 0.1];
 else
     fCenter=median(a2fReducedWaves(:));
     fStd=mad(a2fReducedWaves(:));
@@ -1483,7 +1403,7 @@ for iIter=1:iNumUnitsInRange
 
     a3fColorDist = min(1,max(a3fColorDist, + sqrt(a3fColorDistUnit)));
     % -- max() prevents zero; min() prevents above 1 (color overflow)
-    a2fColorWavePlot = min(1,max(a2fColorWavePlot, + sqrt(a3fColorWaveUnit)));
+    a2fColorWavePlot = min(1,max(a2fColorWavePlot, + sqrt(a3fColorWaveUnit)));  
     %ahWaves = [ahWaves; plot(handles.hWaves,1:40,a3fWaves(1:aiNumWaves(iIter),:,iIter),'color',afColor)];
 
 
@@ -1908,6 +1828,23 @@ handles.output = hObject;
 
 dbstop if error
 
+hIntervalMenu = uicontextmenu;
+itemm0 = uimenu(hIntervalMenu, 'Label', 'Squeeze Interval', 'Callback', {@fnSqueezeInterval,handles});
+item0 = uimenu(hIntervalMenu, 'Label', 'Split', 'Callback', {@fnSplitUnit,handles});
+item1 = uimenu(hIntervalMenu, 'Label', 'Delete', 'Callback', {@fnDeleteInterval,handles});
+item2 = uimenu(hIntervalMenu, 'Label', 'Merge', 'Callback', {@fnMergeIntervals,handles});
+item3 = uimenu(hIntervalMenu, 'Label', 'Remove All Spikes', 'Callback', {@fnClearUnitSpikes,handles});
+item4 = uimenu(hIntervalMenu, 'Label', 'Clean Outliers', 'Callback', {@fnCleanUnitSpikes,handles});
+item5 = uimenu(hIntervalMenu, 'Label', 'Change Color', 'Callback', {@fnChangeUnitColor,handles});
+item6 = uimenu(hIntervalMenu, 'Label', 'Toggle Visible', 'Callback', {@fnToggleVisibility,handles});
+hIntervalMenu2 = uicontextmenu;
+item1 = uimenu(hIntervalMenu2, 'Label', 'New Interval', 'Callback', {@fnAddNewInterval,handles});
+setappdata(handles.figure1,'hIntervalMenu',hIntervalMenu);
+setappdata(handles.figure1,'hIntervalMenu2',hIntervalMenu2);
+set(handles.figure1,'CloseRequestFcn',@fnMyClose)
+
+setappdata(handles.figure1,'bControlDown',false);
+setappdata(handles.figure1,'bShiftDown',false);
 
 
 %% Read Raw units from plexon
@@ -1917,7 +1854,7 @@ dbstop if error
 handles = guidata(hObject);
 
 strRawFolder = uigetdir();
-strSessionName = 'Junk'; %fnGetMlSessionName(strRawFolder, '.bhv2');
+strSessionName = fnGetMlSessionName(strRawFolder, '.bhv2');
 set(handles.figure1,'Name', strSessionName);
 
 setappdata(handles.figure1,'strctSync',[]);
@@ -1926,11 +1863,11 @@ setappdata(handles.figure1,'strctSync',[]);
 setappdata(handles.figure1,'strRawFolder',strRawFolder);
 setappdata(handles.figure1,'strSessionName',strSessionName);
 
-bNoFiles = fnScanAndUpdateFileList(handles);
-if bNoFiles
-    delete(handles.figure1);
-    return;
-end;
+% bNoFiles = fnScanAndUpdateFileList(handles);
+% if bNoFiles
+%     delete(handles.figure1);
+%     return;
+% end;
 
 fnChangeChannel(handles);
 
@@ -1938,21 +1875,21 @@ fnChangeChannel(handles);
 
 
 
-% set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
-% set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
-% set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
-% set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
-% set(handles.figure1,'KeyPressFcn',@fnKeyDown);
-% set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
-% set(handles.figure1,'Units','pixels');
-% set(handles.figure1,'UserData',handles);
-% set(handles.hPCA,'Units','pixels');
-% set(handles.hPCA,'visible','off');
-% set(handles.hWaves,'visible','off');
-% set(handles.hWaves,'Units','pixels','color',[0 0 0]);
-% set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
-% hold(handles.hPCA,'on');
-% hold(handles.hWaves,'on');
+set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
+set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
+set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
+set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
+set(handles.figure1,'KeyPressFcn',@fnKeyDown);
+set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
+set(handles.figure1,'Units','pixels');
+set(handles.figure1,'UserData',handles);
+set(handles.hPCA,'Units','pixels');
+set(handles.hPCA,'visible','off');
+set(handles.hWaves,'visible','off');
+set(handles.hWaves,'Units','pixels','color',[0 0 0]);
+set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
+hold(handles.hPCA,'on');
+hold(handles.hWaves,'on');
 
 fnInvalidateIntervals(handles,true);
 fnInvalidatePCA(handles,false,true);
@@ -2035,16 +1972,14 @@ if exist(strOutFileName,'file')
     [strF,strP]=uiputfile(strOutFileName);
     if strF(1) ~= 0
         fnSaveMatSpikeFile(strSpikeFile, strctChannelInfo, astrctSpikes, [strP,strF]);
-        %         fnDumpChannelSpikes(strctChannaoelInfo,astrctSpikes, [strP,strF]);
+%         fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, [strP,strF]);
     else
         return;
     end
 else
-    %     fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, strOutFileName);
+%     fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, strOutFileName);
     fnSaveMatSpikeFile(strSpikeFile, strctChannelInfo, astrctSpikes, strOutFileName);
 end
-
-
 % Discard undo
 setappdata(handles.figure1,'acUndoOperations',{});
 acIntervals = getappdata(handles.figure1,'acIntervals');
@@ -2055,7 +1990,6 @@ acUnitAssociation = getappdata(handles.figure1,'acUnitAssociation');
 acUnitAssociation = acUnitAssociation(end);
 setappdata(handles.figure1,'acUnitAssociation',acUnitAssociation);
 fprintf('Saved!\n');
-
 return;
 
 function afColor =fnGetDefaultUnitColors(iUniqueID)
@@ -2071,7 +2005,6 @@ return;
 
 function hUnitTypeController_SelectionChangeFcn(hObject, eventdata, handles)
 fnScanAndUpdateFileList(handles);
-disp('OK');
 fnChangeChannel(handles);
 
 return;
@@ -2086,7 +2019,11 @@ strSessionName = getappdata(handles.figure1,'strSessionName');
 if strRawFolder(end) ~= filesep()
     strRawFolder(end+1) = filesep();
 end;
-astrctRawFiles = dir(fullfile(strRawFolder,[strSessionName '.mat']));
+if ~isempty(strSessionName)
+    astrctRawFiles = dir([strRawFolder,strSessionName,'*-spikes_ch*.raw']);
+else
+    astrctRawFiles = dir([strRawFolder,strSessionName,'*_Spikes.raw']);
+end
 bNoFiles = false;
 if isempty(astrctRawFiles)
     bNoFiles = true;
@@ -2095,9 +2032,12 @@ end;
 
 acFileNamesRAW = {astrctRawFiles.name};
 setappdata(handles.figure1,'acFileNamesRAW',acFileNamesRAW);
-strSortedUnitsPath = fullfile(strRawFolder,'..','Processed','SortedUnits');
-astrctSortedFiles = dir(fullfile(strSortedUnitsPath,'*.mat'));
-
+strSortedUnitsPath = [strRawFolder,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
+if ~isempty(strSessionName)
+    astrctSortedFiles = dir([strSortedUnitsPath,strSessionName,'*-spikes_ch*.raw']);
+else
+    astrctSortedFiles = dir([strSortedUnitsPath,'*-spikes_ch*.raw']);
+end
 acFileNamesSorted = {astrctSortedFiles.name};
 
 if isempty(acFileNamesSorted)
@@ -2115,7 +2055,20 @@ else
     set(handles.hChannelsList,'string',acFileNamesSorted,'value',1);
 end
 
-set(handles.hUseAnnotation,'enable','on');
+if isempty(acFileNamesRAW)
+    setappdata(handles.figure1,'strSession',[]);
+    set(handles.hUseAnnotation,'enable','off');
+else
+    iIndex = strfind(acFileNamesRAW{1},'-spikes_ch');
+    strSession = acFileNamesRAW{1}(1:iIndex-1);
+    setappdata(handles.figure1,'strSession',strSession);
+    strActiveUnitFile = [strRawFolder,strSession,'-ActiveUnits.txt'];
+    if exist(strActiveUnitFile,'file')
+        set(handles.hUseAnnotation,'enable','on');
+    else
+        set(handles.hUseAnnotation,'enable','off','value',0);
+    end
+end
 return;
 
 
@@ -2156,17 +2109,17 @@ bSortedListActive = get(handles.hSorted,'value');
 
 if ~bSortedListActive
     % Load RAW File
-    acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
-    strSpikeFile = fullfile(strRawFolder,acFileNamesRAW{iSelectedFile} );
-    % [tmp_fname, tmp_fpath, ~]= uigetfile(strRawFolder);
-    %strSpikeFile = getappdata(handles.figure1,'acFileNamesRAW');
+    %     acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
+%     strSpikeFile = fullfile(strRawFolder, 'ao_extracted_F240111.mat');
+    [tmp_fname, tmp_fpath, ~]= uigetfile(strRawFolder);
+    strSpikeFile = fullfile(tmp_fpath, tmp_fname);
 
     % Generate intervals
 else
-    acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
-    strSortedUnitsPath = fullfile(strRawFolder,'..','Processed','SortedUnits');
-    strSpikeFile = fullfile(strSortedUnitsPath,acFileNamesSorted{iSelectedFile});
-
+    %    acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
+    %    strSortedUnitsPath = [strRawFolder,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
+    %    strSpikeFile = [strSortedUnitsPath,acFileNamesSorted{iSelectedFile}];
+    error('not implemented');
 end
 setappdata(handles.figure1,'strSpikeFile',strSpikeFile);
 [astrctRawUnits, strctChannelInfo, astrctAnnotatedIntervals] = fnLoadMatSpikeFile(strSpikeFile);
@@ -2209,11 +2162,7 @@ setappdata(handles.figure1,'a2fSortedAllWaveForms',a2fSortedAllWaveForms);
 
 
 %% Generate default intervals....
-if ~isempty(astrctAnnotatedIntervals)
-    astrctIntervals = fnReadAlphaOmegaActiveUnits(handles);
-else
-    astrctIntervals = fnGenerateDefaultIntervals([],astrctRawUnits,afSortedAllTS)
-end
+astrctIntervals = fnReadAlphaOmegaActiveUnits(handles);
 
 if ~isempty(astrctIntervals)
     fMaxIntervalTS = max(cat(1,astrctIntervals.m_fEndTS_Plexon));
@@ -2540,23 +2489,10 @@ if isempty(astrctRelevantIntervals)
 end;
 
 for k=1:length(astrctRelevantIntervals)
-    astrctIntervals_all(k) =  fnBuildNewInterval(...
+    astrctIntervals(k) =  fnBuildNewInterval(...
         astrctRelevantIntervals(k).m_fStartTS_AO,astrctRelevantIntervals(k).m_fEndTS_AO,...
         astrctRelevantIntervals(k).m_iUniqueID, fnGetDefaultUnitColors(astrctRelevantIntervals(k).m_iUniqueID));
 end
-
-
-iCount_astrctIntervals = 1;
-for j=1:length(astrctIntervals_all)
-    i_astrctIntervals = astrctIntervals_all(j);
-    afTsDiff = i_astrctIntervals.m_fEndTS_Plexon - i_astrctIntervals.m_fStartTS_Plexon;
-    if afTsDiff > 60 * 3
-        astrctIntervals(iCount_astrctIntervals) = i_astrctIntervals;
-        iCount_astrctIntervals = iCount_astrctIntervals + 1;
-    end
-end
-
-
 aiUnitVertical = fnGetIntervalVerticalValue(astrctIntervals,false);
 for k=1:length(astrctIntervals)
     astrctIntervals(k).m_iVerticalStack = aiUnitVertical(k);

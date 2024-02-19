@@ -295,7 +295,7 @@ strSpikesFile = strctInterval.m_strSpikeFile;
 [strctSpikes, strctChannelInfo] = fnReadDumpSpikeFile(strSpikesFile, 'SingleUnit',[strctInterval.m_iChannel,strctInterval.m_iUniqueID],'Interval',[strctInterval.m_fStartTS_Plexon,strctInterval.m_fEndTS_Plexon]);
 
 
-% Add attributes to unit
+% Add attributes to unit`
 strctUnit = fnAddAttribute(strctUnit,'Type','Single Unit Statistics');
 strctUnit = fnAddAttribute(strctUnit,'Depth', median(strctInterval.m_a2fAdvancerPositionTS_Plexon(2,:)));
 

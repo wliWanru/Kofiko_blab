@@ -1,41 +1,41 @@
-    function varargout = DataBrowser(varargin)
+    function varargout = DataBrowser_AO(varargin)
 %
 % Copyright (c) 2008 Shay Ohayon, California Institute of Technology.
 % This file is a part of a free software. you can redistribute it and/or modify
 % it under the terms of the GNU General Public License as published by
 % the Free Software Foundation (see GPL.txt)
 
-% DATABROWSER M-file for DataBrowser.fig
-%      DATABROWSER, by itself, creates a new DATABROWSER or raises the existing
+% DATABROWSER_AO M-file for DataBrowser_AO.fig
+%      DATABROWSER_AO, by itself, creates a new DATABROWSER_AO or raises the existing
 %      singleton*.
 %
-%      H = DATABROWSER returns the handle to a new DATABROWSER or the handle to
+%      H = DATABROWSER_AO returns the handle to a new DATABROWSER_AO or the handle to
 %      the existing singleton*.
 %
-%      DATABROWSER('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in DATABROWSER.M with the given input arguments.
+%      DATABROWSER_AO('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in DATABROWSER_AO.M with the given input arguments.
 %
-%      DATABROWSER('Property','Value',...) creates a new DATABROWSER or raises the
+%      DATABROWSER_AO('Property','Value',...) creates a new DATABROWSER_AO or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before DataBrowser_OpeningFcn gets called.  An
+%      applied to the GUI before DataBrowser_AO_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to DataBrowser_OpeningFcn via varargin.
+%      stop.  All inputs are passed to DataBrowser_AO_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help DataBrowser
+% Edit the above text to modify the response to help DataBrowser_AO
 
-% Last Modified by GUIDE v2.5 03-Dec-2022 21:09:47
+% Last Modified by GUIDE v2.5 08-Feb-2024 20:11:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
     'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @DataBrowser_OpeningFcn, ...
-    'gui_OutputFcn',  @DataBrowser_OutputFcn, ...
+    'gui_OpeningFcn', @DataBrowser_AO_OpeningFcn, ...
+    'gui_OutputFcn',  @DataBrowser_AO_OutputFcn, ...
     'gui_LayoutFcn',  [] , ...
     'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -50,20 +50,23 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before DataBrowser is made visible.
-function DataBrowser_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before DataBrowser_AO is made visible.
+function DataBrowser_AO_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to DataBrowser (see VARARGIN)
+% varargin   command line arguments to DataBrowser_AO (see VARARGIN)
 global g_strDataBrowserSavedSessionFile
 dbstop if error
 
-% Choose default command line output for DataBrowser
+% Choose default command line output for DataBrowser_AO
 handles.output = hObject;
 fnOpenPanels(1);
-strctConfig = fnMyXMLToStruct(fullfile('.', 'Config', 'DataBrowser.xml'));
+fn = which('DataBrowser_AO.m');
+[filepath junk] = fileparts(fn);
+cd(filepath);
+strctConfig = fnMyXMLToStruct(fullfile(filepath, 'Config', 'DataBrowser.xml'));
 setappdata(handles.figure1,'strctConfig',strctConfig);
 
 % Update menus.
@@ -89,16 +92,26 @@ fnUpdateMenus(handles);
 setappdata(handles.figure1,'iCurrPanel',1);
 guidata(hObject, handles);
 
-g_strDataBrowserSavedSessionFile = 'C:\PB\DataBrowserSavedSession.mat';
+g_strDataBrowserSavedSessionFile = 'DataBrowserSavedSession.mat';
+  strctTmp = load(g_strDataBrowserSavedSessionFile);
+%         acDates = fnCellStructToArray(strctTmp.acSessions,'m_strTimeDate');
+%         afDateNum = zeros(1,length(acDates));
+%         for k=1:length(acDates)
+%             afDateNum(k) = datenum(acDates{k});
+%         end
+%         [Dummy, aiIndex]=sort(afDateNum,2,'ascend');
+        setappdata(handles.figure1,'acSessions',strctTmp.acSessions);
+        fnInvalidateSessionList(handles);
+        
 if exist(g_strDataBrowserSavedSessionFile,'file')
     try
         strctTmp = load(g_strDataBrowserSavedSessionFile);
-        acDates = fnCellStructToArray(strctTmp.acSessions,'m_strTimeDate');
-        afDateNum = zeros(1,length(acDates));
-        for k=1:length(acDates)
-            afDateNum(k) = datenum(acDates{k});
-        end
-        [Dummy, aiIndex]=sort(afDateNum,2,'ascend');
+%         acDates = fnCellStructToArray(strctTmp.acSessions,'m_strTimeDate');
+%         afDateNum = zeros(1,length(acDates));
+%         for k=1:length(acDates)
+%             afDateNum(k) = datenum(acDates{k});
+%         end
+%         [Dummy, aiIndex]=sort(afDateNum,2,'ascend');
         setappdata(handles.figure1,'acSessions',strctTmp.acSessions(aiIndex));
         fnInvalidateSessionList(handles);
         
@@ -201,7 +214,7 @@ delete(gcf);
 
 return;
 
-% UIWAIT makes DataBrowser wait for user response (see UIRESUME)
+% UIWAIT makes DataBrowser_AO wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
@@ -331,6 +344,8 @@ if double(strctTmp2.KeyChar(1)) == 32
             
         end
         
+        
+            
         try
             acFields = fieldnames(strctData);
             strctDataField = getfield(strctData,acFields{1});
@@ -437,7 +452,7 @@ return;
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = DataBrowser_OutputFcn(hObject, eventdata, handles)
+function varargout = DataBrowser_AO_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 function fnInvalidateSelectedUnitsList(handles)
@@ -506,10 +521,10 @@ return;
 
 function fnSaveDataBrowserConf(handles)
 global g_strDataBrowserSavedSessionFile
-g_strDataBrowserSavedSessionFile = 'D:\DataBrowserSavedSession.mat';
+g_strDataBrowserSavedSessionFile = 'DataBrowserSavedSession.mat';
 
 acSessions = getappdata(handles.figure1,'acSessions');
-save(g_strDataBrowserSavedSessionFile,'acSessions','-V6');
+save(g_strDataBrowserSavedSessionFile,'acSessions','-v7');
 return;
 
 
@@ -527,7 +542,7 @@ setappdata(handles.figure1,'aiSelectedRaw',aiSelected);
 setappdata(handles.figure1,'acSessions',acSessions);
 fnInvalidateSessionList(handles);
 fnInvalidateDataEntries(handles);
-save('C:\Temp\DataBrowserSavedSession.mat','acSessions');
+save('D:\DataBrowserSavedSession.mat','acSessions');
 
 return;
 
@@ -616,8 +631,9 @@ strDefualtSearchFolder = fnGetDefaultSearchFolder(handles);
 if strFile(1) == 0
     return;
 end;
+
 try
-    [bValid,strctInfo] = fnGetSessionInformation(fullfile(strPath,strFile));
+    [bValid,strctInfo] = fnGetSessionInformation_AO(strFile,strPath);
     fnAddSession(handles,strctInfo);
 catch
     fprintf('Error adding session!\n');
@@ -1229,7 +1245,7 @@ else
     % No processed data found!
     return;
 end
-
+strProcessedRoot
 acFiles = fnGetAllFilesRecursive(strProcessedRoot, '.mat');
 % Read files....
 iCounter = 1;
@@ -1566,7 +1582,7 @@ if isempty(acSessions)
 end
 acSubjects = fnCellStructToArray(acSessions,'m_strSubject');
 acDates= fnCellStructToArray(acSessions,'m_strTimeDate');
-[~,iSortInd] = sort(datenum(acDates));
+[~,iSortInd] = sort((acDates));
 setappdata(handles.figure1,'acSessions',acSessions(iSortInd));
 fnInvalidateSessionList(handles);
 return;
@@ -1579,7 +1595,7 @@ if isempty(acSessions)
     return;
 end
 acSubjects = fnCellStructToArray(acSessions,'m_strSubject');
-afDates= datenum(fnCellStructToArray(acSessions,'m_strTimeDate'));
+afDates= fnCellStructToArray(acSessions,'m_strTimeDate');
 
 aiSortIndAll = [];
 [acUniqueSubjects,~,aiToUnique] = unique(acSubjects);

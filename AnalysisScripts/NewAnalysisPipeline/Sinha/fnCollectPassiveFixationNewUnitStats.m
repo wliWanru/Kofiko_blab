@@ -15,6 +15,7 @@ acUnitsStat = [];
 % First, find which lists were loaded during the entire Kofiko recording file
 acUniqueLists = setdiff(unique(strctKofiko.g_astrctAllParadigms{iParadigmIndex}.ImageList.Buffer),{''});
 iNumUniqueLists = length(acUniqueLists);
+fnWorkerLog('NumofLists %d',iNumUniqueLists);
 afTrialsStartTime_Kofiko = strctKofiko.g_astrctAllParadigms{iParadigmIndex}.Trials.TimeStamp;
 afListOnsetTimes_Kofiko = [strctKofiko.g_astrctAllParadigms{iParadigmIndex}.ImageList.TimeStamp,Inf];
 
@@ -99,7 +100,8 @@ elseif strcmpi(strExt,'.xml')
                 fnWorkerLog('Loading Design to infer conditions (%s)',strImageListDescrip);
                 strctDesign = fnParsePassiveFixationDesignMediaFiles([strImageListDescrip,'.xml'], false, false);
             else
-                assert(false);
+                return;
+                %assert(false);
             end;
         end
         

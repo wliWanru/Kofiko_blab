@@ -17,12 +17,12 @@ for iEntryIter=1:NumEntries
         astrctUnitIntervals(iIntervalCounter).m_iUnit = a2fActiveUnitsTable(iEntryIter,3) - 1;
         astrctUnitIntervals(iIntervalCounter).m_fStartTp_AO_origin = a2fActiveUnitsTable(iEntryIter, 4);
 
-        astrctUnitIntervals(iIntervalCounter).m_fStartTS_AO = a2fActiveUnitsTable(iEntryIter, 4) / 44000; 
+        astrctUnitIntervals(iIntervalCounter).m_fStartTS_AO = a2fActiveUnitsTable(iEntryIter, 4) / 44000 - ao.t_TimeBegin;
 
         astrctUnitIntervals(iIntervalCounter).m_fEndTp_AO_origin = NaN;
         astrctUnitIntervals(iIntervalCounter).m_fEndTS_AO = NaN;
 
-        
+
         astrctUnitIntervals(iIntervalCounter).m_bStillOpen = true;
     else
         % Old interval closed.
@@ -36,7 +36,7 @@ for iEntryIter=1:NumEntries
         iUnit = a2fActiveUnitsTable(iEntryIter,3) - 1;
 
         fEndTp_AO_origin = a2fActiveUnitsTable(iEntryIter, 4);
-        fEndTS_AO = a2fActiveUnitsTable(iEntryIter, 4) / 44000;
+        fEndTS_AO = a2fActiveUnitsTable(iEntryIter, 4) / 44000 - ao.t_TimeBegin;
 
 
 
@@ -57,7 +57,7 @@ for iEntryIter=1:NumEntries
 end
 
 
-%% 
+%%
 % Check each interval for an NaN end time and assign the next interval's start time if necessary
 for iInterval = 1:iIntervalCounter
     if isnan(astrctUnitIntervals(iInterval).m_fEndTp_AO_origin)
@@ -65,7 +65,9 @@ for iInterval = 1:iIntervalCounter
             astrctUnitIntervals(iInterval).m_fEndTp_AO_origin = astrctUnitIntervals(iInterval + 1).m_fStartTp_AO_origin;
             astrctUnitIntervals(iInterval).m_fEndTS_AO = astrctUnitIntervals(iInterval + 1).m_fStartTS_AO;
         else
-            warning('Warning: Last interval does not have an end time. Leaving as NaN.\n');
+            astrctUnitIntervals(iInterval).m_fEndTp_AO_origin = max(ao.SEG(1).waveforms_timestamps);
+            astrctUnitIntervals(iInterval).m_fEndTS_AO = astrctUnitIntervals(iInterval).m_fEndTp_AO_origin/44000 - ao.t_TimeBegin;
+            warning('Warning: Last interval does not have an end time. Assume it will last to the end.\n');        
         end
     end
 end

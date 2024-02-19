@@ -517,6 +517,7 @@ elseif fnInsideRect(pt2fMouse,aiPCARect)
         min(fMaxY, max(fMinY,pt2fZoomAtPoint(2) - fYZoom/2)),...
         max(fMinY, min(fMaxY,pt2fZoomAtPoint(2) + fYZoom/2))];
     
+    strctGUIParams.m_afRangePCA
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     fnInvalidatePCA(handles,false,true);
     

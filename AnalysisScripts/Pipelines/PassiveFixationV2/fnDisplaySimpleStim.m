@@ -261,60 +261,60 @@ ahSubPlots = [h1,h2,h3,h4,h5,h6,h7,h8];
 % ylabel('Firing Rate (Hz)');
 % title('Average Firing Rate');
 % grid on
-if ~isempty(strctUnit.m_strctStimulusParams.m_afStimulusON_MS)
-    hAxes = axes('parent',ahPanels(4));
-    hAxes = subplot(2,2,1);
-    [a,b]=unique(strctUnit.m_strctStimulusParams.m_afStimulusON_MS);
-    bar(a,b)
-    title('ON Time');
+% if ~isempty(strctUnit.m_strctStimulusParams.m_afStimulusON_MS)
+%     hAxes = axes('parent',ahPanels(4));
+%     hAxes = subplot(2,2,1);
+%     [a,b]=unique(strctUnit.m_strctStimulusParams.m_afStimulusON_MS);
+%     bar(a,b)
+%     title('ON Time');
+% 
+%     hAxes = subplot(2,2,2);
+%     [a,b]=unique(strctUnit.m_strctStimulusParams.m_afStimulusOFF_MS);
+%     bar(a,b)
+%     title('OFF Time');
+% 
+%     hAxes = subplot(2,2,3);
+%     [a,b]=unique(strctUnit.m_strctStimulusParams.m_afStimulusSizePix);
+%     bar(a,b)
+%     title('Size (Half width)');
+% 
+%     hAxes = subplot(2,2,4);
+%     [a,b]=unique(strctUnit.m_strctStimulusParams.m_afRotationAngle);
+%     bar(a,b)
+%     title('Rotation Angle');
+% 
+% end
 
-    hAxes = subplot(2,2,2);
-    [a,b]=unique(strctUnit.m_strctStimulusParams.m_afStimulusOFF_MS);
-    bar(a,b)
-    title('OFF Time');
-
-    hAxes = subplot(2,2,3);
-    [a,b]=unique(strctUnit.m_strctStimulusParams.m_afStimulusSizePix);
-    bar(a,b)
-    title('Size (Half width)');
-
-    hAxes = subplot(2,2,4);
-    [a,b]=unique(strctUnit.m_strctStimulusParams.m_afRotationAngle);
-    bar(a,b)
-    title('Rotation Angle');
-
-end
-
-if isfield(strctUnit,'m_strctValidTrials')
-    hParent = ahPanels(2);
-    h1 = tightsubplot(2,1,1,'Spacing',0.2,'Parent',hParent);
-    plot(strctUnit.m_strctValidTrials.m_afEyeDistanceFromFixationSpotMin);
-    hold on;
-    if sum(strctUnit.m_strctValidTrials.m_abValidTrials) > 0
-        plot(strctUnit.m_strctValidTrials.m_afEyeDistanceFromFixationSpotMedian,'g');
-        plot(strctUnit.m_strctValidTrials.m_afAvgStimulusSize,'r');
-        axis([1 length(strctUnit.m_strctValidTrials.m_afEyeDistanceFromFixationSpotMin),0, ...
-            1.5*max(strctUnit.m_strctValidTrials.m_afAvgStimulusSize)]);
-        legend('Min','Median','Stimulus Size');
-        xlabel('Trial');
-        ylabel('Distance From Fixation Spot (pix)');
-        title('Monkey Fixation Performance');
-        h2 = tightsubplot(2,1,2,'Spacing',0.2,'Parent',hParent);
-
-        iCorrect = sum(strctUnit.m_strctValidTrials.m_afFixationPerc >=...
-            strctUnit.m_strctValidTrials.m_fFixationPercThreshold);
-        iIncorrect = sum(strctUnit.m_strctValidTrials.m_afFixationPerc <...
-            strctUnit.m_strctValidTrials.m_fFixationPercThreshold);
-        explode = [1 0];
-        pie(h2,[iCorrect,iIncorrect] ,explode)
-        legend({'Fixation','Non Fixated'},'Location','NorthEastOutside');
-        title(sprintf('%d Trials, Critera: %d%% of presentation time', ...
-            length(strctUnit.m_strctValidTrials.m_afFixationPerc),...
-            strctUnit.m_strctValidTrials.m_fFixationPercThreshold));
-
-        %    h2 = tightsubplot(2,2,2,'Spacing',0.2,'Parent',hParent);
-        %    h2 = tightsubplot(2,1,2,'Spacing',0.2,'Parent',hParent);
-
-    end
-end
+% if isfield(strctUnit,'m_strctValidTrials')
+%     hParent = ahPanels(2);
+%     h1 = tightsubplot(2,1,1,'Spacing',0.2,'Parent',hParent);
+%     plot(strctUnit.m_strctValidTrials.m_afEyeDistanceFromFixationSpotMin);
+%     hold on;
+%     if sum(strctUnit.m_strctValidTrials.m_abValidTrials) > 0
+%         plot(strctUnit.m_strctValidTrials.m_afEyeDistanceFromFixationSpotMedian,'g');
+%         plot(strctUnit.m_strctValidTrials.m_afAvgStimulusSize,'r');
+%         axis([1 length(strctUnit.m_strctValidTrials.m_afEyeDistanceFromFixationSpotMin),0, ...
+%             1.5*max(strctUnit.m_strctValidTrials.m_afAvgStimulusSize)]);
+%         legend('Min','Median','Stimulus Size');
+%         xlabel('Trial');
+%         ylabel('Distance From Fixation Spot (pix)');
+%         title('Monkey Fixation Performance');
+%         h2 = tightsubplot(2,1,2,'Spacing',0.2,'Parent',hParent);
+% 
+%         iCorrect = sum(strctUnit.m_strctValidTrials.m_afFixationPerc >=...
+%             strctUnit.m_strctValidTrials.m_fFixationPercThreshold);
+%         iIncorrect = sum(strctUnit.m_strctValidTrials.m_afFixationPerc <...
+%             strctUnit.m_strctValidTrials.m_fFixationPercThreshold);
+%         explode = [1 0];
+%         pie(h2,[iCorrect,iIncorrect] ,explode)
+%         legend({'Fixation','Non Fixated'},'Location','NorthEastOutside');
+%         title(sprintf('%d Trials, Critera: %d%% of presentation time', ...
+%             length(strctUnit.m_strctValidTrials.m_afFixationPerc),...
+%             strctUnit.m_strctValidTrials.m_fFixationPercThreshold));
+% 
+%            h2 = tightsubplot(2,2,2,'Spacing',0.2,'Parent',hParent);
+%            h2 = tightsubplot(2,1,2,'Spacing',0.2,'Parent',hParent);
+% 
+%     end
+% end
 return;

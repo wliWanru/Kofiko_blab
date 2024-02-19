@@ -48,7 +48,7 @@ if ~ismember('Passive Fixation New',acstrParadigmNames)
 end;
 
 %% Read advancer file for electrode position during the experiments...
-a2fTemp = textread('C:\wanruli\codes\open_codes\tool_data\raw_eph\150924\RAW\150924_155226_Rocco-Advancers.txt');
+a2fTemp = textread('D:\kofiko_wanru\150924_shay\RAW\150924_155226_Rocco-Advancers.txt');
 afDepthRelativeToGridTop = a2fTemp(:,2);
 aiAdvancerUniqueID = a2fTemp(:,1);
 afAdvancerChangeTS_StatServer = a2fTemp(:,6);
@@ -75,6 +75,8 @@ for iChannelIter=1:iNumSortedChannels
     % Only read the intervals and find out whether there is something to analyze....
     
     strSpikeFile = [strSortedUnitsFolder,astrctSortedChannels(iChannelIter).name];
+    %fnWorkerLog('Type of sSF is %s',class(strSpikeFile));
+    %save("ssF", "strSpikeFile")
     [astrctAllUnits,strctChannelInfo] = fnReadDumpSpikeFile(strSpikeFile);
     astrctAllUnits = fnComputeUnitSNR(astrctAllUnits);
     fnWorkerLog('Analyzing channel %d (%s)',strctChannelInfo.m_iChannelID,strctChannelInfo.m_strChannelName);
@@ -93,8 +95,6 @@ for iChannelIter=1:iNumSortedChannels
     aiSortedUnits = find(cat(1,astrctAllUnits.m_iUnitIndex) ~= 0);
     astrctUnits = astrctAllUnits(aiSortedUnits);
     
-    
-    
     % For each sorted unit, find out whether passive fixation paradgm was
     % active during that time...
     
@@ -103,7 +103,7 @@ for iChannelIter=1:iNumSortedChannels
     fnResetWaitbarGlobal(3,3);
     for iUnitIter=1:iNumSortedUnits
         fnSetWaitbarGlobal(iUnitIter/iNumSortedUnits,3, 3);
-
+        
         fStartTS_PTB_Kofiko = fnTimeZoneChange(astrctUnits(iUnitIter).m_afInterval(1) ,strctSync,'Plexon','Kofiko');
         fEndTS_PTB_Kofiko = fnTimeZoneChange(astrctUnits(iUnitIter).m_afInterval(2),strctSync,'Plexon','Kofiko');
         
@@ -133,6 +133,7 @@ for iChannelIter=1:iNumSortedChannels
             strctInterval.m_strAnalogChannelFile = strAnalogChannelFile;
             strctInterval.m_a2fAdvancerPositionTS_Plexon = a2fAdvancerPositionTS_Plexon;
             acUnitsStat = fnCollectPassiveFixationNewUnitStats(strctKofiko, strctSync, strctConfig, strctInterval);
+            break
             if ~isempty(acUnitsStat)
                 % Save the statistics to disk
                 iNumDataEntries = length(acUnitsStat);

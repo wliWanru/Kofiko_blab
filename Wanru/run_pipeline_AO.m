@@ -1,6 +1,11 @@
-raw_info.m_strDataRootFolder = 'K:\data\project_data\ephys\240111_test';
-raw_info.m_strConfigFolder = 'C:\wanruli\codes\open_codes\KofikoPB\trunk\Config\';
-raw_info.m_strSession = 'test'
+raw_info.m_strDataRootFolder = '/Users/blab/同步空间/new_kofiko_wks/240201';
+file = which('DataBrowser_AO');
+[path junk] = fileparts(file);
+
+raw_info.m_strConfigFolder = fullfile(path,'Config');
+raw_info.m_strSession = '240201_124300_MaoDan';
+raw_info.strMetaFolder = '/Users/blab/同步空间/new_kofiko_wks/ImageList';
 
 
 fnPipelinePassiveFixation_AO(raw_info)
+
