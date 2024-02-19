@@ -12,15 +12,29 @@ if nargin < 1
 end
 
 if isempty(StatisticSeverTxtfile)
-    % Extract the YYMMDD part in strSessionName
-    % Convert YYMMDD to a date string in 'dd-mmm-yyyy' format
     dateStr = datestr(datenum(strSessionName(1:6), 'yymmdd'), 'dd-mmm-yyyy');
-    StatisticSeverTxtfile = sprintf("%s.txt", dateStr); 
+    StatisticSeverTxtfile = sprintf("%s.txt", dateStr);
 end
 
+out_fname = [strSessionName '_AO.mat'];
+full_name = fullfile(strRawFolder,out_fname);
+if exist(full_name, 'file')
+    fprintf('\nAO extracted file %s already exists! \n', full_name);
+    user_response = input('Do you want to overwrite it? (y/n):  default n', 's');
+    if isempty(user_response)
+        user_response = 'n'; % Default answer
+    end
 
+    if strcmpi(user_response, 'y')
+        % Continue with the program
+    else
+        ao_file_info = dir(full_name);
+        fprintf('using existing AO file\ncreation time: %s\n', datestr(ao_file_info.datenum));
+        return; % Return if user chooses not to continue
+    end
+end
 
-%strSessionName = '240201_124300_MaoDan'; 
+%strSessionName = '240201_124300_MaoDan';
 
 %data_name_format = 'mapfile*.mat';
 data_fnames = get_sorted_fnames(strRawFolder, data_name_format);
@@ -65,7 +79,7 @@ ch_name_LFP = sprintf('CLFP_%03d', idx_record_ch);
 % Read and store all files in a structure
 all_files = struct();
 for idx = 1:n_record_files
-    if ~strcutConvertorNot; 
+    if ~strcutConvertorNot;
         newdata = structAOmat(data_fnames{idx});
     else
         newdata = load(data_fnames{idx});
@@ -76,8 +90,8 @@ end
 
 
 
-%% 
-interval_tbl = read_interval_txt(fullfile(strRawFolder, StatisticSeverTxtfile)); 
+%%
+interval_tbl = read_interval_txt(fullfile(strRawFolder, StatisticSeverTxtfile));
 
 
 %% data validation
@@ -88,11 +102,11 @@ if n_record_files > 1
     for idx_f = 1:n_record_files
         i_fname = data_fnames{idx_f};
         i_mapfile = all_files(idx_f).data;
-    
+
         if idx_f > 1 && i_mapfile.(ch_name_SEG).TimeBegin - times_record(idx_f - 1, 2) > 1
             error('invalid data! data has discontinuity before %s', i_fname)
         end
-    
+
         times_record(idx_f, 1) = i_mapfile.(ch_name_SEG).TimeBegin;
         times_record(idx_f, 2) = i_mapfile.(ch_name_SEG).TimeEnd;
     end
@@ -107,7 +121,7 @@ for idx_f = 1:n_record_files
 
     % Initialize an empty array to store valid template indices
     validUnitIndices = [];
-    
+
     % Loop through each field starting from 'Template1' up to 'Template8'
     for templateIdx = 1:8
         fieldName = sprintf('Template%d', templateIdx);
@@ -120,7 +134,7 @@ for idx_f = 1:n_record_files
             validUnitIndices = [validUnitIndices, templateIdx];
         end
     end
-    
+
     % Display the valid template indices
     disp('Valid Templates:');
     disp(validUnitIndices);
@@ -164,7 +178,7 @@ validUnitIndices = cat(2,ao_attributes.SEG.valid_unit_indices);
 validUnitIndices = unique(validUnitIndices);
 
 
-%% 
+%%
 % Initialize SEG fields with empty arrays
 for idx_u = 0:length(validUnitIndices)  % Assuming 8 templates plus one for 'LEVEL_SEG'
     ao.SEG(idx_u+1).waveforms = [];
@@ -183,7 +197,7 @@ for idx_f = 1:n_record_files
     i_timeBegin_TS = i_mapfile.(ch_name_SEG).TimeBegin * i_att_SampleRate;
 
     % Append LEVEL_SEG data: unit 0``
-    ao.SEG(1).waveforms = [ao.SEG(1).waveforms, i_mapfile.(ch_name_SEG).('LEVEL_SEG')]; 
+    ao.SEG(1).waveforms = [ao.SEG(1).waveforms, i_mapfile.(ch_name_SEG).('LEVEL_SEG')];
     ao.SEG(1).waveforms_timestamps = [ao.SEG(1).waveforms_timestamps, double(i_mapfile.(ch_name_SEG).('LEVEL')) + i_timeBegin_TS];
 
     % Append waveforms for valid units
@@ -200,9 +214,9 @@ for idx_f = 1:n_record_files
 end
 
 for i = 1:length(ao.SEG)
-        tmp = double(ao.SEG(i).waveforms)'/1000;
-        tmp(tmp<-0.14) = -0.14; tmp(tmp>0.14) = 0.14;
-        ao.SEG(i).waveforms = tmp(:,1:3:96);
+    tmp = double(ao.SEG(i).waveforms)'/1000;
+    tmp(tmp<-0.14) = -0.14; tmp(tmp>0.14) = 0.14;
+    ao.SEG(i).waveforms = tmp(:,1:3:96);
 end
 
 
@@ -212,14 +226,14 @@ for idx = 1:length(i_attribute.valid_unit_indices) + 1
         (ao.SEG(idx).waveforms_timestamps(end) - first_timeBegin_TS) / i_att_SampleRate];
 end
 
-%% LFP 
+%% LFP
 
 allLFP = [];
 
 % Iterate through each file
 for idx_f = 1:n_record_files
     i_mapfile = all_files(idx_f).data;
-    
+
     % Concatenate trigger indices and events
     allLFP = [allLFP; i_mapfile.(ch_name_LFP).Samples'];
     st(idx_f) = i_mapfile.(ch_name_LFP).TimeBegin;
@@ -242,7 +256,7 @@ all_triggers_events = [];
 % Iterate through each file
 for idx_f = 1:n_record_files
     i_mapfile = all_files(idx_f).data;
-    
+
     % Concatenate trigger indices and events
     all_triggers_indices = [all_triggers_indices; i_mapfile.CInPort_001.Samples(1, :)'];
     all_triggers_events = [all_triggers_events; i_mapfile.CInPort_001.Samples(2, :)'];
@@ -267,8 +281,7 @@ ao.strctChannelInfo.m_fThreshold = NaN;
 ao.strctChannelInfo.m_bFiltersActive = NaN;
 ao.strctChannelInfo.m_bSorted = 0;
 
-out_fname = [strSessionName '_AO.mat'];
-full_name = fullfile(strRawFolder,out_fname);
-save(out_fname, 'ao');
-disp('Alpha_Omega Data were extracted')
+
+save(full_name, 'ao');
+disp('Alpha_Omega Data were extracted');
 

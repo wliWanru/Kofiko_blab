@@ -7,7 +7,7 @@ strDataRootFolder = strctInputs.m_strDataRootFolder;
 strSession = strctInputs.m_strSession;
 
 fnWorkerLog('Starting passive fixation standard analysis pipline...');
-fnWorkerLog('Session : %d',strSession);
+fnWorkerLog('Session : %s',strSession);
 fnWorkerLog('Data Root : %s',strDataRootFolder);
 
 % [tmp_fname, tmp_fpath]= uigetfile(strRawFolder);
@@ -24,8 +24,8 @@ end
 %% Load and reorganize data.
 % Re-organize the format of ao Trigger data
 % strAoFile = "D:\kofiko_wanru\20240120_tutu\Processed\SortedUnits\240120_111111_TuTu_sorted.mat";
-xx = dir(fullfile(strctInputs.m_strDataRootFolder,'raw','*_AO.mat'));
-strAoFile = fullfile(xx(1).folder,xx(1).name);
+strAo_match = dir(fullfile(strctInputs.m_strDataRootFolder,'raw','*_AO.mat'));
+strAoFile = fullfile(strAo_match(1).folder,strAo_match(1).name);
 AoData = load(strAoFile);
 AoData = AoData.ao;
 ao_Trigger = AoData.Trigger;
@@ -64,13 +64,14 @@ end
 
 % Filter
 notEmptyIndices = arrayfun(@(x) ~isempty(x.ImageCode), AOEvents);
+% -- it should be about half of all the indices number
 AOEventsFiltered = AOEvents(notEmptyIndices);
 
 % Re-organize the format of monkeylogic data
 % strMonkeyLogic = 'D:\kofiko_wanru\20240120_tutu\ml_result.mat';
 tic
-xx = dir(fullfile(strctInputs.m_strDataRootFolder,'raw','*_ML.mat'));
-strMonkeyLogic = fullfile(xx(1).folder,xx(1).name);
+strAo_match = dir(fullfile(strctInputs.m_strDataRootFolder,'raw','*_ML.mat'));
+strMonkeyLogic = fullfile(strAo_match(1).folder,strAo_match(1).name);
 MLFile = load(strMonkeyLogic).bhvmat;
 Percent_Threshold = 0.9;
 N_events = 0;

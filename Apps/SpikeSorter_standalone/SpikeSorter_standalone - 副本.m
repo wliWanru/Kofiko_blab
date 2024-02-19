@@ -53,75 +53,7 @@ function SpikeSorter_standalone_OpeningFcn(hObject, eventdata, handles, varargin
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to SpikeSorter_standalone (see VARARGIN)
-handles.output = hObject;
 
-dbstop if error
-
-hIntervalMenu = uicontextmenu;
-itemm0 = uimenu(hIntervalMenu, 'Label', 'Squeeze Interval', 'Callback', {@fnSqueezeInterval,handles});
-item0 = uimenu(hIntervalMenu, 'Label', 'Split', 'Callback', {@fnSplitUnit,handles});
-item1 = uimenu(hIntervalMenu, 'Label', 'Delete', 'Callback', {@fnDeleteInterval,handles});
-item2 = uimenu(hIntervalMenu, 'Label', 'Merge', 'Callback', {@fnMergeIntervals,handles});
-item3 = uimenu(hIntervalMenu, 'Label', 'Remove All Spikes', 'Callback', {@fnClearUnitSpikes,handles});
-item4 = uimenu(hIntervalMenu, 'Label', 'Clean Outliers', 'Callback', {@fnCleanUnitSpikes,handles});
-item5 = uimenu(hIntervalMenu, 'Label', 'Change Color', 'Callback', {@fnChangeUnitColor,handles});
-item6 = uimenu(hIntervalMenu, 'Label', 'Toggle Visible', 'Callback', {@fnToggleVisibility,handles});
-hIntervalMenu2 = uicontextmenu;
-item1 = uimenu(hIntervalMenu2, 'Label', 'New Interval', 'Callback', {@fnAddNewInterval,handles});
-setappdata(handles.figure1,'hIntervalMenu',hIntervalMenu);
-setappdata(handles.figure1,'hIntervalMenu2',hIntervalMenu2);
-set(handles.figure1,'CloseRequestFcn',@fnMyClose)
-
-setappdata(handles.figure1,'bControlDown',false);
-setappdata(handles.figure1,'bShiftDown',false);
-if isempty(varargin)
-    strRawFolder=uigetdir();
-    %    aiInd = find(strRawFolder == filesep);
-    strSessionName = '';
-else
-    [strRawFolder,strSessionName,ext] =fileparts( varargin{1});
-end
-setappdata(handles.figure1,'strSpikeFile',varargin{1});
-setappdata(handles.figure1,'strRawFolder',strRawFolder);
-setappdata(handles.figure1,'strSessionName',strSessionName);
-
-bNoFiles = fnScanAndUpdateFileList(handles);
-if bNoFiles
-    delete(handles.figure1);
-    return;
-end;
-if ~isfile(varargin{1})
-    delete(handles.figure1);
-    return;
-end
-
-
-fnChangeChannel(handles);
-
-%fnInitializeFirstTime(handles,strRawFolder);
-
-
-
-set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
-set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
-set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
-set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
-set(handles.figure1,'KeyPressFcn',@fnKeyDown);
-set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
-set(handles.figure1,'Units','pixels');
-set(handles.figure1,'UserData',handles);
-set(handles.hPCA,'Units','pixels');
-set(handles.hPCA,'visible','off');
-set(handles.hWaves,'visible','off');
-set(handles.hWaves,'Units','pixels','color',[0 0 0]);
-set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
-hold(handles.hPCA,'on');
-hold(handles.hWaves,'on');
-
-fnInvalidateIntervals(handles,true);
-fnInvalidatePCA(handles,false,true);
-% Update handles structure
-guidata(hObject, handles);
 
 
 
@@ -151,7 +83,7 @@ aiNewAssoc = zeros(1, length(afSortedAllTS));
 if isempty(strctSync)
     aiAvailableUnits = cat(1,astrctRawUnits.m_iUnitIndex);
     aiNonZero = find(aiAvailableUnits ~= 0);
-
+    
     for k=1:length(aiNonZero)
         iUniqueID = aiAvailableUnits(aiNonZero(k));
         aiNewAssoc(ismember(afSortedAllTS, astrctRawUnits(aiNonZero(k)).m_afTimestamps)) = iUniqueID;
@@ -164,7 +96,7 @@ else
     % Split units using frames...
     aiAvailableUnits = cat(1,astrctRawUnits.m_iUnitIndex);
     aiNonZero = find(aiAvailableUnits ~= 0);
-
+    
     iCounter = 1;
     iNumFrames = length(strctSync.m_strctKofikoToPlexon.m_afStartFrameTS_PLX);
     for iUnitIter=1:length(aiNonZero)
@@ -347,7 +279,7 @@ strctGUIParams = getappdata(handles.figure1,'strctGUIParams');
 if ~isempty(strctGUIParams.m_aiSelectedIntervals) &&  length(strctGUIParams.m_aiSelectedIntervals)>1
     astrctUnitIntervals = fnGetIntervals(handles);
     aiSpikeToUniqueID = fnGetUnitAssociation(handles);
-
+    
     % First, find the start and end
     fNewStartTS = min(cat(1,astrctUnitIntervals(strctGUIParams.m_aiSelectedIntervals).m_fStartTS_Plexon));
     fNewEndTS = max(cat(1,astrctUnitIntervals(strctGUIParams.m_aiSelectedIntervals).m_fEndTS_Plexon));
@@ -362,22 +294,22 @@ if ~isempty(strctGUIParams.m_aiSelectedIntervals) &&  length(strctGUIParams.m_ai
     end
     afColor  = afColor  / length(strctGUIParams.m_aiSelectedIntervals);
     setappdata(handles.figure1,'iMaxUniqueID',iNewUniqueValue);
-
+    
     fnUpdateSpikeAssociation(handles,aiSpikeToUniqueID);
     % Remove intervals
     astrctUnitIntervals(strctGUIParams.m_aiSelectedIntervals) = [];
     % Set new interval
     astrctUnitIntervals(end+1) = fnBuildNewInterval(fNewStartTS, fNewEndTS,iNewUniqueValue,afColor  );
-
+    
     % Update Y interval
-
+    
     fnUpdateIntervals(handles,astrctUnitIntervals,false);
-
+    
     acUndoOperations = getappdata(handles.figure1,'acUndoOperations');
     acUndoOperations = [acUndoOperations(1:end-2), { {'Spikes','Intervals'}}];
     setappdata(handles.figure1,'acUndoOperations',acUndoOperations);
-
-
+    
+    
     fnInvalidateIntervalsAux(handles,astrctUnitIntervals,false,true);
     fnInvalidatePCA(handles,false,false);
 end
@@ -398,25 +330,25 @@ function fnDeleteInterval(a,b,handles)
 strctGUIParams = getappdata(handles.figure1,'strctGUIParams');
 if ~isempty(strctGUIParams.m_aiSelectedIntervals)
     astrctUnitIntervals = fnGetIntervals(handles);
-
+    
     aiSpikeToUniqueID = fnGetUnitAssociation(handles);
     % Clear up asssciation...
-
+    
     for k=1:length(strctGUIParams.m_aiSelectedIntervals)
         aiSpikeToUniqueID(aiSpikeToUniqueID==astrctUnitIntervals(strctGUIParams.m_aiSelectedIntervals(k)).m_iUniqueID) = 0;
     end;
     fnUpdateSpikeAssociation(handles,aiSpikeToUniqueID);
-
+    
     astrctUnitIntervals(strctGUIParams.m_aiSelectedIntervals) = [];
     fnUpdateIntervals(handles,astrctUnitIntervals,false);
     astrctUnitIntervals = fnGetIntervals(handles);
     acUndoOperations = getappdata(handles.figure1,'acUndoOperations');
     acUndoOperations = [acUndoOperations(1:end-2), { {'Spikes','Intervals'}}];
     setappdata(handles.figure1,'acUndoOperations',acUndoOperations);
-
+    
     strctGUIParams.m_aiSelectedIntervals = [];
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
-
+    
     fnInvalidateIntervalsAux(handles,astrctUnitIntervals,true,true);
     fnInvalidatePCA(handles,false,false);
 end
@@ -517,6 +449,7 @@ elseif fnInsideRect(pt2fMouse,aiPCARect)
         min(fMaxY, max(fMinY,pt2fZoomAtPoint(2) - fYZoom/2)),...
         max(fMinY, min(fMaxY,pt2fZoomAtPoint(2) + fYZoom/2))];
     
+    strctGUIParams.m_afRangePCA
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     fnInvalidatePCA(handles,false,true);
     
@@ -552,7 +485,7 @@ for iIntervalIter=1:iNumIntervals
     fStartY = astrctUnitIntervals(iIntervalIter).m_iVerticalStack-fHeight;
     fEndY = astrctUnitIntervals(iIntervalIter).m_iVerticalStack+fHeight;
     if pt2fMouseTime(1) >= fStartX && pt2fMouseTime(1) <= fEndX &&  pt2fMouseTime(2) >= fStartY &&  pt2fMouseTime(2) <= fEndY
-
+        
         fLength = fEndX-fStartX;
         if pt2fMouseTime(1) >= fStartX && pt2fMouseTime(1) <= fStartX+fLength*0.2
             %  fprintf('Inside Left side of Interval %d\n',astrctUnitIntervals(iIntervalIter).m_iUniqueID);
@@ -567,7 +500,7 @@ for iIntervalIter=1:iNumIntervals
             set(handles.figure1, 'Pointer', 'fleur');
             strWhere = 'Center';
         end
-
+        
         iIntervalIndex = iIntervalIter;
         break;
     end
@@ -600,7 +533,7 @@ elseif fnInsideRect(pt2fMouse,aiWaveRect)
     strWindow = 'Waves';
     hHandle = handles.hWaves;
 else
-
+    
 end
 return;
 
@@ -642,11 +575,11 @@ if strcmp(strctGUIParams.m_strMouseMode,'ContourObject') && strcmp(strctMouseDow
     if ~isempty(hContourObject) && ishandle(hContourObject)
         afX = get(hContourObject,'xdata');
         afY = get(hContourObject,'ydata');
-
+        
         %         if strctMouseOp.m_pt2fPositionInWindow(1) ~= afX(end) && strctMouseOp.m_pt2fPositionInWindow(2) ~= afY(end)
         set(hContourObject,'xdata',[ afX, strctMouseOp.m_pt2fPositionInWindow(1)],...
             'ydata', [afY, strctMouseOp.m_pt2fPositionInWindow(2)]);
-
+        
         %         end
     else
         hContourObject = plot(strctMouseDownOp.m_hAxes,...
@@ -664,15 +597,15 @@ switch strctMouseDownOp.m_strWindow
                 if strcmp(strctMouseDownOp.m_strWindow,strctMouseOp.m_strWindow) && ...
                         ~isempty(strctMouseDownOp.m_iIntervalIndex)
                     afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
-
+                    
                     astrctUnitIntervals = fnGetIntervals(handles);
                     if ~isempty(astrctUnitIntervals)
                         fZero = max(0,min([afSortedAllTS(1); cat(1,astrctUnitIntervals.m_fStartTS_Plexon)]));
                     else
                         fZero = afSortedAllTS(1);
                     end
-
-
+                    
+                    
                     switch strctMouseDownOp.m_strWhere
                         case 'Left'
                             strctMouseDownOp.m_astrctIntervals(strctMouseDownOp.m_iIntervalIndex).m_fStartTS_Plexon = ...
@@ -682,7 +615,7 @@ switch strctMouseDownOp.m_strWindow
                                 max(strctMouseDownOp.m_astrctIntervals(strctMouseDownOp.m_iIntervalIndex).m_fStartTS_Plexon + 5, strctMouseOp.m_pt2fPositionInWindow(1)+fZero);
                             % strctGUIParams.m_fCurrentTime = strctMouseDownOp.m_astrctIntervals(strctMouseDownOp.m_iIntervalIndex).m_fEndTS_Plexon-strctGUIParams.m_fTimeWindowSec;
                         case 'Center'
-
+                            
                             if ~isempty(strctMousePrevOp)
                                 fDelta = strctMouseOp.m_pt2fPositionInWindow(1)-strctMouseDownOp.m_pt2fPositionInWindow(1);
                                 strctMouseDownOp.m_astrctIntervals(strctMouseDownOp.m_iIntervalIndex).m_fStartTS_Plexon = ...
@@ -691,7 +624,7 @@ switch strctMouseDownOp.m_strWindow
                                     strctMouseDownOp.m_astrctIntervalsBefore(strctMouseDownOp.m_iIntervalIndex).m_fEndTS_Plexon+fDelta;
                             end
                     end
-
+                    
                     setappdata(handles.figure1,'strctMouseDownOp',strctMouseDownOp);
                     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
                     fnInvalidateIntervalsAux(handles,strctMouseDownOp.m_astrctIntervals,false,false);
@@ -704,10 +637,10 @@ switch strctMouseDownOp.m_strWindow
                         fShowWindowLen = strctMouseDownOp.m_astrctIntervals(1).m_fEndTS_Plexon- strctMouseDownOp.m_astrctIntervals(1).m_fStartTS_Plexon;
                         afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
                         % Is shift legal?
-
+                        
                         if strctGUIParams.m_afTimeRange(2)+fShift <= afSortedAllTS(end)&& ...
                                 strctGUIParams.m_afTimeRange(1)+fShift >=0
-
+                            
                             strctMouseDownOp.m_astrctIntervals(1).m_fStartTS_Plexon =strctMouseDownOp.m_astrctIntervals(1).m_fStartTS_Plexon + fShift;
                             strctMouseDownOp.m_astrctIntervals(1).m_fEndTS_Plexon  =strctMouseDownOp.m_astrctIntervals(1).m_fEndTS_Plexon + fShift;
                             setappdata(handles.figure1,'strctMouseDownOp',strctMouseDownOp);
@@ -715,13 +648,13 @@ switch strctMouseDownOp.m_strWindow
                             setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
                             fnInvalidateIntervalsAux(handles,strctMouseDownOp.m_astrctIntervals,true,true);
                             fnInvalidatePCA(handles,true,false);
-
+                            
                         end
                     end;
                 end
         end
     case 'Wave'
-
+        
 end
 
 setappdata(handles.figure1,'strctMousePrevOp',strctMouseOp);
@@ -767,12 +700,12 @@ end;
 switch strctMouseOp.m_strWindow
     case 'PCA'
         strctGUIParams.m_strMouseMode = 'ContourObject';
-
+        
         bControlDown = getappdata(handles.figure1,'bControlDown');
         bShiftDown = getappdata(handles.figure1,'bShiftDown');
-
-
-
+        
+        
+        
         if  bControlDown &&  bShiftDown
             strctGUIParams.m_strMouseCallback = @fnRemoveWavesContourAll;
         elseif  bControlDown &&  ~bShiftDown
@@ -782,8 +715,8 @@ switch strctMouseOp.m_strWindow
         elseif ~bControlDown &&  ~bShiftDown
             strctGUIParams.m_strMouseCallback = @fnAddWavesContour;
         end
-
-
+        
+        
         setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     case 'Timeline'
         if ~isempty(strctMouseOp.m_iIntervalIndex)
@@ -794,7 +727,7 @@ switch strctMouseOp.m_strWindow
         strctGUIParams.m_strMouseMode = 'TwoClickLineObject';
         bControlDown = getappdata(handles.figure1,'bControlDown');
         bShiftDown = getappdata(handles.figure1,'bShiftDown');
-
+        
         if  bControlDown &&  bShiftDown
             strctGUIParams.m_strMouseCallback = @fnRemoveWavesAll;
         elseif  bControlDown &&  ~bShiftDown
@@ -804,12 +737,12 @@ switch strctMouseOp.m_strWindow
         elseif ~bControlDown &&  ~bShiftDown
             strctGUIParams.m_strMouseCallback = @fnAddWaves;
         end
-
+        
         setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     otherwise
         strctGUIParams.m_strMouseMode = 'Browse';
         setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
-
+        
 end
 
 
@@ -855,8 +788,8 @@ end
 if isempty(strctMouseDownOp) || isempty(strctMouseDownOp.m_strWindow)
     strctGUIParams.m_strMouseMode = 'Browse';
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
-
-
+    
+    
     return;
 end;
 
@@ -870,9 +803,9 @@ end
 
 switch strctMouseDownOp.m_strWindow
     case 'PCA'
-
+        
     case 'Timeline'
-
+        
         switch strctGUIParams.m_strMouseMode
             case 'IntervalChange'
                 if bMouseMoved && ~isempty(strctGUIParams.m_aiSelectedIntervals)
@@ -884,7 +817,7 @@ switch strctMouseDownOp.m_strWindow
                     fnInvalidateIntervals(handles,false);
                 else
                     % Set unit in focus (?)
-
+                    
                     bControlDown = getappdata(handles.figure1,'bControlDown');
                     if bControlDown
                         iIndx = setdiff(find(strctGUIParams.m_aiSelectedIntervals == strctMouseDownOp.m_iIntervalIndex),1);
@@ -894,7 +827,7 @@ switch strctMouseDownOp.m_strWindow
                             strctGUIParams.m_aiSelectedIntervals =[strctGUIParams.m_aiSelectedIntervals,strctGUIParams.m_aiSelectedIntervals,strctMouseDownOp.m_iIntervalIndex];
                         end
                     else
-
+                        
                         if isempty(strctGUIParams.m_aiSelectedIntervals) || (length(strctGUIParams.m_aiSelectedIntervals) == 1 && strctGUIParams.m_aiSelectedIntervals == 1) || strcmp(strctMouseDownOp.m_strMouseClick,'DoubleClick')
                             % Bring viewing interval to this unit...
                             strctMouseDownOp.m_astrctIntervals(1).m_fStartTS_Plexon = strctMouseDownOp.m_astrctIntervals(strctMouseDownOp.m_iIntervalIndex).m_fStartTS_Plexon;
@@ -903,9 +836,9 @@ switch strctMouseDownOp.m_strWindow
                         end
                         strctGUIParams.m_aiSelectedIntervals = strctMouseDownOp.m_iIntervalIndex;
                     end
-
+                    
                     if length(strctGUIParams.m_aiSelectedIntervals) == 1
-
+                        
                         afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
                         aiUnitAsso = fnGetUnitAssociation(handles);
                         afSpikeTimeDiffMS = 1e3*diff(afSortedAllTS(aiUnitAsso == strctMouseDownOp.m_astrctIntervals(strctGUIParams.m_aiSelectedIntervals).m_iUniqueID));
@@ -923,16 +856,16 @@ switch strctMouseDownOp.m_strWindow
                             bar(afTime,afSpikeHist,'parent',handles.hISI,'edgecolor','none','facecolor','b');
                             set(handles.hPercentContamination,'string', sprintf('%.2f%% < 2ms, Total = %d',sum(afSpikeHist(abShortTime))/length(afSpikeTimeDiffMS)*1e2,1+length(afSpikeTimeDiffMS)));
                         end
-
+                        
                     end
-
+                    
                     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
                     fnInvalidateIntervals(handles,false);
                     fnInvalidatePCA(handles,false,false);
                 end
             case 'Browse'
                 if strcmp(strctMouseDownOp.m_strMouseClick,'Left')
-
+                    
                     bControlDown = getappdata(handles.figure1,'bControlDown');
                     if ~isempty(bControlDown) && bControlDown && ~isempty(strctMouseDownOp.m_iIntervalIndex)
                         iIndx = setdiff(find(strctGUIParams.m_aiSelectedIntervals == strctMouseDownOp.m_iIntervalIndex),1);
@@ -944,17 +877,17 @@ switch strctMouseDownOp.m_strWindow
                     else
                         strctGUIParams.m_aiSelectedIntervals = strctMouseDownOp.m_iIntervalIndex;
                     end
-
+                    
                     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
                     fnInvalidateIntervals(handles,false);
                     fnInvalidatePCA(handles,false,false);
                 end
-
+                
         end
         strctGUIParams.m_strMouseMode = 'Browse';
     case 'Waves'
         strctGUIParams.m_strMouseMode = 'Browse';
-
+        
 end
 setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
 
@@ -1001,8 +934,8 @@ for iTimeStepIter=1:length(afTimeSteps);
         iVerticalIndex = aiUnitVertical(iInterval);
         abVerticalOccupied(iVerticalIndex) = false;
     end
-
-
+    
+    
 end
 if bIgnoreFirst
     aiUnitVertical = [max(aiUnitVertical)+1,aiUnitVertical];
@@ -1017,12 +950,11 @@ return;
 function fnInvalidateIntervalsAux(handles,astrctUnitIntervals,bMoveTimeAxis,bForceRedraw)
 strctGUIParams=getappdata(handles.figure1,'strctGUIParams');
 afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
-% % if ~isempty(astrctUnitIntervals)
-% %     fZero = max(0,min([afSortedAllTS(1); cat(1,astrctUnitIntervals.m_fStartTS_Plexon)]));
-% % else
-fZero = afSortedAllTS(1);
-% end
-
+if ~isempty(astrctUnitIntervals)
+    fZero = max(0,min([afSortedAllTS(1); cat(1,astrctUnitIntervals.m_fStartTS_Plexon)]));
+else
+    fZero = afSortedAllTS(1);
+end
 
 iNumIntervals = length(astrctUnitIntervals);
 fHeight=0.2;
@@ -1047,28 +979,22 @@ if isempty(ahIntervalPatch) || bForceRedraw
             ahIntervalText(k) = text((fXstart+fXend)/2,fY,sprintf('%d',astrctUnitIntervals(k).m_iUniqueID),'parent',handles.hTimeLine,'fontweight','bold','UIContextMenu',hIntervalMenu);
         else
             if sum(strctGUIParams.m_aiSelectedIntervals == k) > 0
-
+                
                 ahIntervalPatch(k) = patch('xdata',[fXstart,fXstart,fXend,fXend],'ydata',...
                     [0 iMaxHeight+fHeight,iMaxHeight+fHeight,0],'facecolor',astrctUnitIntervals(k).m_afColor,'parent',handles.hTimeLine,'UIContextMenu',hIntervalMenu2,'LineWidth',3,'EdgeColor',[0.4 0 0.4]);
             else
                 ahIntervalPatch(k) = patch('xdata',[fXstart,fXstart,fXend,fXend],'ydata',...
                     [0 iMaxHeight+fHeight,iMaxHeight+fHeight,0],'facecolor',astrctUnitIntervals(k).m_afColor,'parent',handles.hTimeLine,'UIContextMenu',hIntervalMenu2);
-
+                
             end
         end
-        % ----------------------------------------------------------------
-        % -- wanru: for values > 10000 make it like format longG 
-        % -- without which would display 1.0 (e4) the exponent was covered 
-        % -- by the bar figure position
-        handles.hTimeLine.XAxis.Exponent = 0;
-        % ----------------------------------------------------------------
     end
     setappdata(handles.figure1,'ahIntervalPatch',ahIntervalPatch);
     setappdata(handles.figure1,'ahIntervalText',ahIntervalText);
-
+    
 else
     ahIntervalText = getappdata(handles.figure1,'ahIntervalText');
-
+    
     for k=1:iNumIntervals
         if k>=2
             fXstart = astrctUnitIntervals(k).m_fStartTS_Plexon-fZero;
@@ -1090,30 +1016,18 @@ else
                 [0 iMaxHeight+fHeight,iMaxHeight+fHeight,0],'LineWidth',3,'EdgeColor',[0.4 0 0.4]);
         end
     end
-
+    
 end
 strctAdvancer = getappdata(handles.figure1,'strctAdvancer');
 if ~isempty(strctAdvancer) && bForceRedraw
     afSqueeze = (strctAdvancer.m_afDepthMM-min(strctAdvancer.m_afDepthMM(:)))/(max(strctAdvancer.m_afDepthMM)-min(strctAdvancer.m_afDepthMM));
     plot(strctAdvancer.m_afTimeStampElectrodeMoved-fZero, afSqueeze+iMaxHeight-1,'parent',handles.hTimeLine);
-
-end
-
-% ---------------- important for scrolling --------------------
-if bMoveTimeAxis
-    set(handles.hTimeLine,'xlim',[strctGUIParams.m_afTimeRange(1),strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
-end
-
-if bMoveTimeAxis
-    set(handles.hTimeLine,'xlim',[max(0, strctGUIParams.m_afTimeRange(1)-fZero), max(0, strctGUIParams.m_afTimeRange(2)-fZero)+0.01],'ylim',[0 iMaxHeight+fHeight] );
+    
 end
 
 % if bMoveTimeAxis
-%     set(handles.hTimeLine,'xlim',[max(0, strctGUIParams.m_afTimeRange(1)), strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
+%     set(handles.hTimeLine,'xlim',[strctGUIParams.m_afTimeRange(1),strctGUIParams.m_afTimeRange(2)+0.01],'ylim',[0 iMaxHeight+fHeight] );
 % end
-% disp(strctGUIParams.m_afTimeRange);
-% ---------------- important for scrolling --------------------
-
 
 return;
 
@@ -1161,24 +1075,24 @@ switch eventdata.Key
     case 'space'
         afSortedAllTS = getappdata(handles.figure1,'afSortedAllTS');
         a2fSortedAllWaveForms = getappdata(handles.figure1,'a2fSortedAllWaveForms');
-
+        
         astrctUnitIntervals = fnGetIntervals(handles);
         abVisibility = cat(1,astrctUnitIntervals.m_bVisible);
         aiUnitAssociation = fnGetUnitAssociation(handles);
-
+        
         abSpikesVisible = ones(size(aiUnitAssociation))>0;
         aiNotVisible = find(~abVisibility);
         for k=1:length(aiNotVisible)
             abSpikesVisible( aiUnitAssociation==    astrctUnitIntervals(aiNotVisible(k)).m_iUniqueID) =0;
         end
-
+        
         % Find all waves that intersect the line AND the time interval marked!
         fCurrentTime=astrctUnitIntervals(1).m_fStartTS_Plexon;
         fTimeWindowSec=astrctUnitIntervals(1).m_fEndTS_Plexon-astrctUnitIntervals(1).m_fStartTS_Plexon;
-
+        
         abValidSpikes = afSortedAllTS >= fCurrentTime & afSortedAllTS <= fCurrentTime+fTimeWindowSec & abSpikesVisible(:);
-
-
+        
+        
         if ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier{1},'shift')
             % Feature based PCA ?
             [afMax,aiIndMax]=max(a2fSortedAllWaveForms,[],2);
@@ -1191,9 +1105,9 @@ switch eventdata.Key
             a2fPCACoeff = fliplr(coeff);
             a2fPCA = a2fSortedAllWaveFormsZeroMean*a2fPCACoeff(:,1:2)*loads(1:2,1:2);
         end
-
+        
         strctGUIParams = getappdata(handles.figure1,'strctGUIParams');
-
+        
         fCenter1=median(a2fPCA(:,1));
         fCenter2=median(a2fPCA(:,2));
         fStd1=mad(a2fPCA(:,1));
@@ -1202,17 +1116,17 @@ switch eventdata.Key
         fMin2 = fCenter2-5*fStd2;
         fMax1 = fCenter1+5*fStd1;
         fMax2 = fCenter2+5*fStd2;
-
-
+        
+        
         strctGUIParams.m_afRangePCA = [fMin1, fMax1,fMin2,fMax2];%[min(a2fPCA(:,1)), max(a2fPCA(:,1)), min(a2fPCA(:,2)), max(a2fPCA(:,2))];
         setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
-
+        
         setappdata(handles.figure1,'a2fPCA',a2fPCA);
         fnInvalidatePCA(handles,false,true);
-
-
-
-
+        
+        
+        
+        
     case 'z'
         if ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier{1},'control')
             fnUndo(handles);
@@ -1221,7 +1135,7 @@ switch eventdata.Key
         if ~isempty(eventdata.Modifier) && strcmp(eventdata.Modifier{1},'control')
             fnSaveCurrentChannel(handles);
         end
-
+        
 end
 
 return;
@@ -1267,7 +1181,7 @@ for iIntervalIter=2:iNumIntervals
         continue;
     end;
     % interval either intersects or fully inside.
-
+    
     if astrctUnitIntervals( iIntervalIter).m_fStartTS_Plexon >= afViewingRange(1)-fEps && ...
             astrctUnitIntervals( iIntervalIter).m_fEndTS_Plexon <= afViewingRange(2)+fEps
         abIntervalsToDelete(iIntervalIter) = true;
@@ -1399,6 +1313,10 @@ aiUnitsInRange = unique(aiReducedSpikeAssociation);
 iNumPtsX = 200;
 iNumPtsY = 200;
 
+
+
+
+
 afRangeX = linspace(strctGUIParams.m_afRangePCA(1),strctGUIParams.m_afRangePCA(2),iNumPtsX);
 afRangeY = linspace(strctGUIParams.m_afRangePCA(3),strctGUIParams.m_afRangePCA(4),iNumPtsY);
 
@@ -1417,12 +1335,13 @@ a3fCov = zeros(2,2,iNumUnitsInRange);
 a3fWaves = zeros(iNumPtsY,iNumPtsX,iNumUnitsInRange);
 
 if isempty(a2fReducedWaves)
-    afRangeYwave = [-0.14 0.14];
+    afRangeYwave = [-0.1 0.1];
 else
     fCenter=median(a2fReducedWaves(:));
     fStd=mad(a2fReducedWaves(:));
     afRangeYwave=fCenter+8*[-fStd fStd];
 end
+afRangeYwave = [-0.15 0.15];
 % bMicroVoltsWaveforms = max(a2fReducedWaves(:)) < 10;
 % if bMicroVoltsWaveforms
 %     afRangeYwave = [-0.1 0.1];
@@ -1436,24 +1355,24 @@ for iIter=1:iNumUnitsInRange
     iUnitOfInterest = aiUnitsInRange(iIter);
     iIndex = find(aiIntervalsUniqueID == iUnitOfInterest);
     if isempty(iIndex) ||  (~isempty(iIndex) && astrctUnitIntervals(iIndex).m_bVisible == true)
-
+        
         afSpikePCAX = a2fReducedData(aiReducedSpikeAssociation == iUnitOfInterest,1);
         afSpikePCAY = a2fReducedData(aiReducedSpikeAssociation == iUnitOfInterest,2);
         a2fUnitWaves = -a2fReducedWaves(aiReducedSpikeAssociation == iUnitOfInterest,:);
-
+        
         afAllRangeX = linspace(min(afSpikePCAX),max(afSpikePCAX),iNumPtsX);
         afAllRangeY = linspace(min(afSpikePCAY),max(afSpikePCAY),iNumPtsY);
-
-
+        
+        
         a3fWaves(:,:,iIter) = sqrt(Bresenham(a2fUnitWaves, afRangeXwave([1,end]), iNumPtsX,afRangeYwave([1,end]), iNumPtsY));
-
-
+        
+        
         [a2fMean(:,iIter), a3fCov(:,:,iIter)]=fnFitGaussian([afSpikePCAX(:),afSpikePCAY(:)]);
-
+        
         a2fDist  = hist2(afSpikePCAX,afSpikePCAY,afRangeX,afRangeY);
-
+        
         a2fTemp= hist2(afSpikePCAX,afSpikePCAY,afAllRangeX,afAllRangeY);
-
+        
         a2fSmooth = (a2fDist);%conv2(a2fDist,a2fSmoothingKernel,'same');
         a3fSmoothDist(:,:,iIter) = a2fSmooth/max(a2fTemp(:));%-min(a2fSmooth(:))) / (max(a2fSmooth(:))-min(a2fSmooth(:)));
         a3fWaves(:,:,iIter) = a3fWaves(:,:,iIter) / max(max(a3fWaves(:,:,iIter)));
@@ -1471,7 +1390,7 @@ for iIter=1:iNumUnitsInRange
     if iUniqueID == 0
         afColor = [1,1,1];
     else
-
+        
         iIndex = find(cat(1,astrctUnitIntervals.m_iUniqueID) == iUniqueID);
         if isempty(iIndex)
             continue;
@@ -1485,13 +1404,13 @@ for iIter=1:iNumUnitsInRange
         a3fColorDistUnit(:,:,k) = a3fSmoothDist(:,:,iIter) * afColor(k);
         a3fColorWaveUnit(:,:,k) = a3fWaves(:,:,iIter) * afColor(k);
     end
-
+    
     a3fColorDist = min(1,max(a3fColorDist, + sqrt(a3fColorDistUnit)));
     % -- max() prevents zero; min() prevents above 1 (color overflow)
     a2fColorWavePlot = min(1,max(a2fColorWavePlot, + sqrt(a3fColorWaveUnit)));
     %ahWaves = [ahWaves; plot(handles.hWaves,1:40,a3fWaves(1:aiNumWaves(iIter),:,iIter),'color',afColor)];
-
-
+    
+    
 end
 
 hWaves = getappdata(handles.figure1,'hWaves');
@@ -1507,18 +1426,26 @@ if bForceRedraw
     end;
 end
 
-% if isempty(hWaves)
-%     hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
-%     setappdata(handles.figure1,'hWaves',hWaves);
-% else
-%     set(hWaves,'cdata', a2fColorWavePlot);
-% end
+%plot(1:10,1:10,'parent',handles.hWaves);
 
-hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
-setappdata(handles.figure1,'hWaves',hWaves);
+afRangeYwave
+if isempty(hWaves)
+    hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
+    setappdata(handles.figure1,'hWaves',hWaves);
+else
+    hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
+    set(hWaves,'cdata', a2fColorWavePlot);
+    setappdata(handles.figure1,'hWaves',hWaves);
+    
+end
+% set(handles.hWaves,'xlim',[1 32]);
+% set (handles.hWaves,'ylim',afRangeYwave);
+
+
+%hWaves = imagesc(afRangeXwave,afRangeYwave,a2fColorWavePlot,'parent',handles.hWaves);
 
 % if bMicroVoltsWaveforms
-set (handles.hWaves,'ylim',afRangeYwave);
+%set (handles.hWaves,'ylim',afRangeYwave);
 % else
 %      set (handles.hWaves,'ylim',[-2048 2048]);
 % end
@@ -1530,17 +1457,17 @@ if isempty(hPCARaster)
     set(handles.hPCA,'xlim',[afRangeX(1), afRangeX(end)+eps],'ylim',[afRangeY(1),afRangeY(end)]);
     hPCARaster = imagesc(afRangeX,afRangeY,a3fColorDist,'parent',handles.hPCA);
     setappdata(handles.figure1,'hPCARaster',hPCARaster);
-
+    
 else
     set(hPCARaster,'cdata',a3fColorDist,'xdata',afRangeX,'ydata',afRangeY);
     hold on;
-
-
+    
+    
     ahHandles = getappdata(handles.figure1,'ahEllipses');
     if ~isempty(ahHandles)
         delete(ahHandles(ishandle(ahHandles)));
     end;
-
+    
     ahHandles = fnDrawEllipses(handles.hPCA,a2fMean,a3fCov,a2fUnitColors,2,afRangeX,afRangeY);
     setappdata(handles.figure1,'ahEllipses',ahHandles);
 end
@@ -1631,7 +1558,7 @@ astrctUnitIntervals = fnGetIntervals(handles);
 
 if isempty(strctGUIParams.m_aiSelectedIntervals) || ( length(strctGUIParams.m_aiSelectedIntervals) == 1 && strctGUIParams.m_aiSelectedIntervals == 1)
     % Add new interval
-
+    
     if isempty(P2) || norm(P1-P2) == 0
         return;
     end
@@ -1639,14 +1566,14 @@ if isempty(strctGUIParams.m_aiSelectedIntervals) || ( length(strctGUIParams.m_ai
     afColor  = rand(1,3);
     astrctUnitIntervals(end+1) = fnBuildNewInterval(...
         astrctUnitIntervals(1).m_fStartTS_Plexon, astrctUnitIntervals(1).m_fEndTS_Plexon, iNewUniqueValue,afColor );
-
+    
     strctGUIParams.m_aiSelectedIntervals=length(astrctUnitIntervals);
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     fnUpdateIntervals(handles,astrctUnitIntervals,false);
     setappdata(handles.figure1,'iMaxUniqueID',iNewUniqueValue);
     fnInvalidateIntervalsAux(handles,astrctUnitIntervals,false,true);
     fnInvalidateIntervals(handles,true);
-
+    
 end
 
 a2fSortedAllWaveForms = getappdata(handles.figure1,'a2fSortedAllWaveForms');
@@ -1747,14 +1674,14 @@ if isempty(strctGUIParams.m_aiSelectedIntervals) || ( length(strctGUIParams.m_ai
     iNewUniqueValue = getappdata(handles.figure1,'iMaxUniqueID')+1;
     afColor  = rand(1,3);
     astrctUnitIntervals(end+1) = fnBuildNewInterval(astrctUnitIntervals(1).m_fStartTS_Plexon, astrctUnitIntervals(1).m_fEndTS_Plexon, iNewUniqueValue,afColor );
-
+    
     strctGUIParams.m_aiSelectedIntervals=length(astrctUnitIntervals);
     setappdata(handles.figure1,'strctGUIParams',strctGUIParams);
     fnUpdateIntervals(handles,astrctUnitIntervals,false);
     setappdata(handles.figure1,'iMaxUniqueID',iNewUniqueValue);
     fnInvalidateIntervalsAux(handles,astrctUnitIntervals,false,true);
     fnInvalidateIntervals(handles,true);
-
+    
 end;
 
 a2fPCA = getappdata(handles.figure1,'a2fPCA');
@@ -1913,6 +1840,23 @@ handles.output = hObject;
 
 dbstop if error
 
+hIntervalMenu = uicontextmenu;
+itemm0 = uimenu(hIntervalMenu, 'Label', 'Squeeze Interval', 'Callback', {@fnSqueezeInterval,handles});
+item0 = uimenu(hIntervalMenu, 'Label', 'Split', 'Callback', {@fnSplitUnit,handles});
+item1 = uimenu(hIntervalMenu, 'Label', 'Delete', 'Callback', {@fnDeleteInterval,handles});
+item2 = uimenu(hIntervalMenu, 'Label', 'Merge', 'Callback', {@fnMergeIntervals,handles});
+item3 = uimenu(hIntervalMenu, 'Label', 'Remove All Spikes', 'Callback', {@fnClearUnitSpikes,handles});
+item4 = uimenu(hIntervalMenu, 'Label', 'Clean Outliers', 'Callback', {@fnCleanUnitSpikes,handles});
+item5 = uimenu(hIntervalMenu, 'Label', 'Change Color', 'Callback', {@fnChangeUnitColor,handles});
+item6 = uimenu(hIntervalMenu, 'Label', 'Toggle Visible', 'Callback', {@fnToggleVisibility,handles});
+hIntervalMenu2 = uicontextmenu;
+item1 = uimenu(hIntervalMenu2, 'Label', 'New Interval', 'Callback', {@fnAddNewInterval,handles});
+setappdata(handles.figure1,'hIntervalMenu',hIntervalMenu);
+setappdata(handles.figure1,'hIntervalMenu2',hIntervalMenu2);
+set(handles.figure1,'CloseRequestFcn',@fnMyClose)
+
+setappdata(handles.figure1,'bControlDown',false);
+setappdata(handles.figure1,'bShiftDown',false);
 
 
 %% Read Raw units from plexon
@@ -1922,7 +1866,8 @@ dbstop if error
 handles = guidata(hObject);
 
 strRawFolder = uigetdir();
-strSessionName = 'Junk'; %fnGetMlSessionName(strRawFolder, '.bhv2');
+%strRawFolder = 'D:\kofiko\kofiko_wanru\240111_test\RAW';
+strSessionName = fnGetMlSessionName(strRawFolder, '.bhv2');
 set(handles.figure1,'Name', strSessionName);
 
 setappdata(handles.figure1,'strctSync',[]);
@@ -1931,11 +1876,11 @@ setappdata(handles.figure1,'strctSync',[]);
 setappdata(handles.figure1,'strRawFolder',strRawFolder);
 setappdata(handles.figure1,'strSessionName',strSessionName);
 
-bNoFiles = fnScanAndUpdateFileList(handles);
-if bNoFiles
-    delete(handles.figure1);
-    return;
-end;
+% bNoFiles = fnScanAndUpdateFileList(handles);
+% if bNoFiles
+%     delete(handles.figure1);
+%     return;
+% end;
 
 fnChangeChannel(handles);
 
@@ -1943,21 +1888,21 @@ fnChangeChannel(handles);
 
 
 
-% set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
-% set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
-% set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
-% set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
-% set(handles.figure1,'KeyPressFcn',@fnKeyDown);
-% set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
-% set(handles.figure1,'Units','pixels');
-% set(handles.figure1,'UserData',handles);
-% set(handles.hPCA,'Units','pixels');
-% set(handles.hPCA,'visible','off');
-% set(handles.hWaves,'visible','off');
-% set(handles.hWaves,'Units','pixels','color',[0 0 0]);
-% set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
-% hold(handles.hPCA,'on');
-% hold(handles.hWaves,'on');
+set(handles.figure1,'WindowButtonMotionFcn',@fnMouseMove);
+set(handles.figure1,'WindowButtonDownFcn',@fnMouseDown);
+set(handles.figure1,'WindowButtonUpFcn',@fnMouseUp);
+set(handles.figure1,'WindowScrollWheelFcn',@fnMouseWheel);
+set(handles.figure1,'KeyPressFcn',@fnKeyDown);
+set(handles.figure1,'KeyReleaseFcn',@fnKeyUp);
+set(handles.figure1,'Units','pixels');
+set(handles.figure1,'UserData',handles);
+set(handles.hPCA,'Units','pixels');
+set(handles.hPCA,'visible','off');
+set(handles.hWaves,'visible','off');
+set(handles.hWaves,'Units','pixels','color',[0 0 0]);
+set(handles.hTimeLine,'units','pixels','UIContextmenu',hIntervalMenu2);
+hold(handles.hPCA,'on');
+hold(handles.hWaves,'on');
 
 fnInvalidateIntervals(handles,true);
 fnInvalidatePCA(handles,false,true);
@@ -2023,7 +1968,7 @@ for iUnitIter=1:iNumIntervals
     astrctSpikes(iUnitIter).m_afInterval = ...
         [astrctUnitIntervals(iUnitIter+1).m_fStartTS_Plexon,...
         astrctUnitIntervals(iUnitIter+1).m_fEndTS_Plexon];
-
+    
     astrctSpikes(iUnitIter).m_afTimestamps = afSortedAllTS(aiSpikeToUniqueID == astrctSpikes(iUnitIter).m_iUnitIndex);
     astrctSpikes(iUnitIter).m_a2fWaveforms = a2fSortedAllWaveForms(aiSpikeToUniqueID == astrctSpikes(iUnitIter).m_iUnitIndex,:);
 end
@@ -2040,7 +1985,7 @@ if exist(strOutFileName,'file')
     [strF,strP]=uiputfile(strOutFileName);
     if strF(1) ~= 0
         fnSaveMatSpikeFile(strSpikeFile, strctChannelInfo, astrctSpikes, [strP,strF]);
-        %         fnDumpChannelSpikes(strctChannaoelInfo,astrctSpikes, [strP,strF]);
+        %         fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, [strP,strF]);
     else
         return;
     end
@@ -2048,8 +1993,6 @@ else
     %     fnDumpChannelSpikes(strctChannelInfo,astrctSpikes, strOutFileName);
     fnSaveMatSpikeFile(strSpikeFile, strctChannelInfo, astrctSpikes, strOutFileName);
 end
-
-
 % Discard undo
 setappdata(handles.figure1,'acUndoOperations',{});
 acIntervals = getappdata(handles.figure1,'acIntervals');
@@ -2060,7 +2003,6 @@ acUnitAssociation = getappdata(handles.figure1,'acUnitAssociation');
 acUnitAssociation = acUnitAssociation(end);
 setappdata(handles.figure1,'acUnitAssociation',acUnitAssociation);
 fprintf('Saved!\n');
-
 return;
 
 function afColor =fnGetDefaultUnitColors(iUniqueID)
@@ -2076,7 +2018,6 @@ return;
 
 function hUnitTypeController_SelectionChangeFcn(hObject, eventdata, handles)
 fnScanAndUpdateFileList(handles);
-disp('OK');
 fnChangeChannel(handles);
 
 return;
@@ -2091,7 +2032,11 @@ strSessionName = getappdata(handles.figure1,'strSessionName');
 if strRawFolder(end) ~= filesep()
     strRawFolder(end+1) = filesep();
 end;
-astrctRawFiles = dir(fullfile(strRawFolder,[strSessionName '.mat']));
+if ~isempty(strSessionName)
+    astrctRawFiles = dir([strRawFolder,strSessionName,'*-spikes_ch*.raw']);
+else
+    astrctRawFiles = dir([strRawFolder,strSessionName,'*_Spikes.raw']);
+end
 bNoFiles = false;
 if isempty(astrctRawFiles)
     bNoFiles = true;
@@ -2100,9 +2045,12 @@ end;
 
 acFileNamesRAW = {astrctRawFiles.name};
 setappdata(handles.figure1,'acFileNamesRAW',acFileNamesRAW);
-strSortedUnitsPath = fullfile(strRawFolder,'..','Processed','SortedUnits');
-astrctSortedFiles = dir(fullfile(strSortedUnitsPath,'*.mat'));
-
+strSortedUnitsPath = [strRawFolder,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
+if ~isempty(strSessionName)
+    astrctSortedFiles = dir([strSortedUnitsPath,strSessionName,'*-spikes_ch*.raw']);
+else
+    astrctSortedFiles = dir([strSortedUnitsPath,'*-spikes_ch*.raw']);
+end
 acFileNamesSorted = {astrctSortedFiles.name};
 
 if isempty(acFileNamesSorted)
@@ -2120,7 +2068,20 @@ else
     set(handles.hChannelsList,'string',acFileNamesSorted,'value',1);
 end
 
-set(handles.hUseAnnotation,'enable','on');
+if isempty(acFileNamesRAW)
+    setappdata(handles.figure1,'strSession',[]);
+    set(handles.hUseAnnotation,'enable','off');
+else
+    iIndex = strfind(acFileNamesRAW{1},'-spikes_ch');
+    strSession = acFileNamesRAW{1}(1:iIndex-1);
+    setappdata(handles.figure1,'strSession',strSession);
+    strActiveUnitFile = [strRawFolder,strSession,'-ActiveUnits.txt'];
+    if exist(strActiveUnitFile,'file')
+        set(handles.hUseAnnotation,'enable','on');
+    else
+        set(handles.hUseAnnotation,'enable','off','value',0);
+    end
+end
 return;
 
 
@@ -2161,17 +2122,19 @@ bSortedListActive = get(handles.hSorted,'value');
 
 if ~bSortedListActive
     % Load RAW File
-    acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
-    strSpikeFile = fullfile(strRawFolder,acFileNamesRAW{iSelectedFile} );
-    % [tmp_fname, tmp_fpath, ~]= uigetfile(strRawFolder);
-    %strSpikeFile = getappdata(handles.figure1,'acFileNamesRAW');
-
+    %     acFileNamesRAW = getappdata(handles.figure1,'acFileNamesRAW');
+    %     strSpikeFile = fullfile(strRawFolder, 'ao_extracted_F240111.mat');
+     [tmp_fname, tmp_fpath, ~]= uigetfile(strRawFolder);
+%     tmp_fpath = strRawFolder;
+%     tmp_fname = 'ao_extracted_F240111.mat';
+    strSpikeFile = fullfile(tmp_fpath, tmp_fname);
+%     
     % Generate intervals
 else
-    acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
-    strSortedUnitsPath = fullfile(strRawFolder,'..','Processed','SortedUnits');
-    strSpikeFile = fullfile(strSortedUnitsPath,acFileNamesSorted{iSelectedFile});
-
+    %    acFileNamesSorted = getappdata(handles.figure1,'acFileNamesSorted');
+    %    strSortedUnitsPath = [strRawFolder,filesep,'..',filesep,'Processed',filesep,'SortedUnits',filesep];
+    %    strSpikeFile = [strSortedUnitsPath,acFileNamesSorted{iSelectedFile}];
+    error('not implemented');
 end
 setappdata(handles.figure1,'strSpikeFile',strSpikeFile);
 [astrctRawUnits, strctChannelInfo, astrctAnnotatedIntervals] = fnLoadMatSpikeFile(strSpikeFile);
@@ -2214,11 +2177,7 @@ setappdata(handles.figure1,'a2fSortedAllWaveForms',a2fSortedAllWaveForms);
 
 
 %% Generate default intervals....
-if ~isempty(astrctAnnotatedIntervals)
-    astrctIntervals = fnReadAlphaOmegaActiveUnits(handles);
-else
-    astrctIntervals = fnGenerateDefaultIntervals([],astrctRawUnits,afSortedAllTS)
-end
+astrctIntervals = fnReadAlphaOmegaActiveUnits(handles);
 
 if ~isempty(astrctIntervals)
     fMaxIntervalTS = max(cat(1,astrctIntervals.m_fEndTS_Plexon));
@@ -2255,7 +2214,7 @@ setappdata(handles.figure1,'iMaxUniqueID',iMaxUniqueID);
 %%
 
 if min(diff(afSortedAllTS)) > 10
-
+    
     % Pick a unique (?) color for each unit
     fTimwWindow = 120*30000;
 else
@@ -2336,7 +2295,7 @@ for iMarkedUnitIter=1:iNumIntervals
     aiMatchedSpikes = find(afSortedAllTS >= astrctAnnotatedIntervals(iMarkedUnitIter).m_fStartTS_Plexon & afSortedAllTS <= astrctAnnotatedIntervals(iMarkedUnitIter).m_fEndTS_Plexon & ...
         strctChannelInfo.m_iChannelID == astrctAnnotatedIntervals(iMarkedUnitIter).m_iChannel & ...
         astrctAnnotatedIntervals(iMarkedUnitIter).m_iUnit == acUnitAssociation{1});
-
+    
     abRelevantIntervals(iMarkedUnitIter) = strctChannelInfo.m_iChannelID == astrctAnnotatedIntervals(iMarkedUnitIter).m_iChannel;
     if ~isempty(aiMatchedSpikes)
         aiSpikeToUnitAssociation(aiMatchedSpikes) = astrctAnnotatedIntervals(iMarkedUnitIter).m_iUniqueID;
@@ -2527,7 +2486,7 @@ for iMarkedUnitIter=1:iNumIntervals
         afSortedAllTS <= astrctAnnotatedIntervals(iMarkedUnitIter).m_fEndTS_AO & ...
         strctChannelInfo.m_iChannelID == astrctAnnotatedIntervals(iMarkedUnitIter).m_iChannel & ...
         astrctAnnotatedIntervals(iMarkedUnitIter).m_iUnit == acUnitAssociation{1});
-
+    
     abRelevantIntervals(iMarkedUnitIter) = strctChannelInfo.m_iChannelID == astrctAnnotatedIntervals(iMarkedUnitIter).m_iChannel;
     if ~isempty(aiMatchedSpikes)
         aiSpikeToUnitAssociation(aiMatchedSpikes) = astrctAnnotatedIntervals(iMarkedUnitIter).m_iUniqueID;
@@ -2545,23 +2504,10 @@ if isempty(astrctRelevantIntervals)
 end;
 
 for k=1:length(astrctRelevantIntervals)
-    astrctIntervals_all(k) =  fnBuildNewInterval(...
+    astrctIntervals(k) =  fnBuildNewInterval(...
         astrctRelevantIntervals(k).m_fStartTS_AO,astrctRelevantIntervals(k).m_fEndTS_AO,...
         astrctRelevantIntervals(k).m_iUniqueID, fnGetDefaultUnitColors(astrctRelevantIntervals(k).m_iUniqueID));
 end
-
-
-iCount_astrctIntervals = 1;
-for j=1:length(astrctIntervals_all)
-    i_astrctIntervals = astrctIntervals_all(j);
-    afTsDiff = i_astrctIntervals.m_fEndTS_Plexon - i_astrctIntervals.m_fStartTS_Plexon;
-    if afTsDiff > 60 * 3
-        astrctIntervals(iCount_astrctIntervals) = i_astrctIntervals;
-        iCount_astrctIntervals = iCount_astrctIntervals + 1;
-    end
-end
-
-
 aiUnitVertical = fnGetIntervalVerticalValue(astrctIntervals,false);
 for k=1:length(astrctIntervals)
     astrctIntervals(k).m_iVerticalStack = aiUnitVertical(k);

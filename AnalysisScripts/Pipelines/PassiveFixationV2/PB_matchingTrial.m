@@ -1,4 +1,4 @@
-function [MLEvents AOEvents] = PB_MatchingTrial(AOData,MLFile,fixation_window,Percent_Threshold);
+function [MLEvents AOEvents] = PB_matchingTrial(AOData,MLFile,fixation_window,Percent_Threshold);
 aoev = AOData.Trigger.events;
 aoev_t = AOData.Trigger.indices_44k_origin;
 
@@ -140,6 +140,14 @@ end
 %
 
 function [rindex todelete]= processindices(index,aoev_t)
+
+% -- index: all AO trigger *index* of a certain value
+% -- aoev_t: all AO trigger values
+% -- index(i) and index(i-1) should be the timeStamp difference between two ML_Trial
+%    beginning; if its a small value, it should be a very short ML_Trial (containing
+%    few images)
+% -- what kind of operation leads to this? 
+% -- sometimes theres multiple starting and ending triggers 
 
 index = sort(index);
 todelete = [];
