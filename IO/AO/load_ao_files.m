@@ -87,8 +87,10 @@ for idx = 1:n_record_files
     all_files(idx).data = newdata;
 end
 
-
-
+all_ch_names = fieldnames(all_files(1).data); 
+event_pattern = '^CInPort_.*';
+matches = ~cellfun(@isempty, regexp(all_ch_names, event_pattern));
+event_ch_name = all_ch_names{matches};
 
 %%
 interval_tbl = read_interval_txt(fullfile(strRawFolder, StatisticSeverTxtfile));
@@ -202,13 +204,13 @@ for idx_f = 1:n_record_files
 
     % Append waveforms for valid units
     for idx_u = 1:length(i_attribute.valid_unit_indices)
-        unit_index = i_attribute.valid_unit_indices(idx_u) + 1;  % +1 to account for 1-based indexing in MATLAB
+        template_number = i_attribute.valid_unit_indices(idx_u);  % +1 to account for 1-based indexing in MATLAB
 
-        i_waveform = i_mapfile.(ch_name_SEG).(sprintf('Template%d_SEG', unit_index - 1));
-        i_waveform_Tp = double(i_mapfile.(ch_name_SEG).(sprintf('Template%d', unit_index - 1))) + i_timeBegin_TS;
+        i_waveform = i_mapfile.(ch_name_SEG).(sprintf('Template%d_SEG', template_number));
+        i_waveform_Tp = double(i_mapfile.(ch_name_SEG).(sprintf('Template%d', template_number))) + i_timeBegin_TS;
 
-        ao.SEG(unit_index).waveforms = [ao.SEG(unit_index).waveforms, i_waveform];
-        ao.SEG(unit_index).waveforms_timestamps = [ao.SEG(unit_index).waveforms_timestamps, i_waveform_Tp];
+        ao.SEG(idx_u+1).waveforms = [ao.SEG(idx_u+1).waveforms, i_waveform];
+        ao.SEG(idx_u+1).waveforms_timestamps = [ao.SEG(idx_u+1).waveforms_timestamps, i_waveform_Tp];
 
     end
 end
@@ -258,12 +260,12 @@ for idx_f = 1:n_record_files
     i_mapfile = all_files(idx_f).data;
 
     % Concatenate trigger indices and events
-    all_triggers_indices = [all_triggers_indices; i_mapfile.CInPort_001.Samples(1, :)'];
-    all_triggers_events = [all_triggers_events; i_mapfile.CInPort_001.Samples(2, :)'];
+    all_triggers_indices = [all_triggers_indices; i_mapfile.(event_ch_name).Samples(1, :)'];
+    all_triggers_events = [all_triggers_events; i_mapfile.(event_ch_name).Samples(2, :)'];
 end
 
 % Assign the concatenated data to the ao structure
-ao.Trigger.att_SampleRate = all_files(1).data.CInPort_001.KHz * 1000;  % Assuming sample rate is the same for all files
+ao.Trigger.att_SampleRate = all_files(1).data.(event_ch_name).KHz * 1000;  % Assuming sample rate is the same for all files
 ao.Trigger.indices_44k_origin = all_triggers_indices;
 ao.Trigger.events = all_triggers_events;
 

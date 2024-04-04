@@ -144,7 +144,6 @@ if ~(length(AOEventsFiltered) == length(MLEventsFiltered))
     fnWorkerLog('Let us try Pinglei''s method');
     [MLEventsFiltered AOEventsFiltered] = PB_matchingTrial(AoData,MLFile,fixation_window,Percent_Threshold);
 
-   
 end
 
 Event_file = struct();

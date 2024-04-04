@@ -1,6 +1,15 @@
 function [bhvmat fn folder] = combinebhv;
 
 folder = uigetdir('EphysData\','Pick the Raw folder');
+
+% Check if the user canceled the folder selection
+if isempty(folder)
+    disp('Folder selection canceled by the user.');
+    bhvmat = []; % Return empty outputs
+    fn = [];
+    return
+end
+
 bhvlist = dir(fullfile(folder,'*.bhv2'));
 
 existed_ML_dirs = dir(fullfile(folder,'*_ML.mat'));
@@ -9,9 +18,11 @@ if length(existed_ML_dirs) > 1
     return
 end
 
-existed_ML_file_info = existed_ML_dirs(1);
-existed_ML_file_dir = fullfile(existed_ML_file_info.folder, existed_ML_file_info.name); 
-if exist(existed_ML_file_dir, 'file')
+if ~isempty(existed_ML_dirs)
+    existed_ML_file_info = existed_ML_dirs(1);
+    existed_ML_file_dir = fullfile(existed_ML_file_info.folder, existed_ML_file_info.name); 
+
+% if exist(existed_ML_file_dir, 'file')
     fprintf('\nML extracted file %s already exists! \n', existed_ML_file_dir);
     user_response = input('Do you want to overwrite it? (y/n): default n ', 's');
 
