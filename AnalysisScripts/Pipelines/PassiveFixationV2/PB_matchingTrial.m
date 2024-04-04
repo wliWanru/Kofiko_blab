@@ -2,28 +2,33 @@ function [MLEvents AOEvents] = PB_matchingTrial(AOData,MLFile,fixation_window,Pe
 aoev = AOData.Trigger.events;
 aoev_t = AOData.Trigger.indices_44k_origin;
 
-index1 = find(aoev == 9);
-index2 = find(aoev == 18);
+ao_index_begin = find(aoev == 9);
+ao_index_end = find(aoev == 18);
 
-rindex1 = processindices(index1,aoev_t);
-rindex2 = processindices(index2,aoev_t);
+rindex_begin = processindices(ao_index_begin,aoev_t);
+rindex_end = processindices(ao_index_end,aoev_t);
 
-if ~(length(rindex1) == length(MLFile))
+if ~(length(rindex_begin) == length(MLFile))
     disp('Number of Starting Trigger 9 doesn''t match');
     return;
 end
 
-if ~(length(rindex2) == length(MLFile))
-    disp('Number of Ending Trigger 18 doesn''t match');
-    return;
+if ~(length(rindex_end) == length(MLFile))
+    disp('Number of Ending Trigger 18 doesn''t match')
+    if length(MLFile) - length(rindex_end) == 1
+        disp('suspect AO crashed before ML ending; try to remove the last ML trial');
+        MLFile = MLFile(1:end-1); 
+    end
 end
+
+
 
 element = 1;
 for i = 1:length(MLFile)
     ct = MLFile(i).BehavioralCodes.CodeTimes;
     cn = MLFile(i).BehavioralCodes.CodeNumbers;
-    aosttime = AOData.Trigger.indices_44k_origin(rindex1(i));
-    aoendtime = AOData.Trigger.indices_44k_origin(rindex2(i));
+    aosttime = AOData.Trigger.indices_44k_origin(rindex_begin(i));
+    aoendtime = AOData.Trigger.indices_44k_origin(rindex_end(i));
     ctstime = ct(1); ctendtime = ct(end);
     ml2ao = polyfit([ctstime ctendtime],[aosttime aoendtime],1);
     ct_transfer = ct*ml2ao(1) + ml2ao(2);
@@ -141,7 +146,7 @@ end
 
 function [rindex todelete]= processindices(index,aoev_t)
 
-% -- index: all AO trigger *index* of a certain value
+% -- index: all AO trigger *index* of a certain value (begin 9, end 18)
 % -- aoev_t: all AO trigger values
 % -- index(i) and index(i-1) should be the timeStamp difference between two ML_Trial
 %    beginning; if its a small value, it should be a very short ML_Trial (containing
