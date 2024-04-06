@@ -10,7 +10,11 @@ rindex_end = processindices(ao_index_end,aoev_t);
 
 if ~(length(rindex_begin) == length(MLFile))
     disp('Number of Starting Trigger 9 doesn''t match');
-    return;
+    if length(rindex_end) - length(MLFile) == 1 && length(rindex_end) ==  length(rindex_begin)
+        disp('suspect ML crashed before AO ending; try to remove the last AO trial trigger');
+        rindex_begin = rindex_begin(1:end-1, 1); 
+        rindex_end = rindex_end(1:end-1, 1);
+    end
 end
 
 if ~(length(rindex_end) == length(MLFile))
