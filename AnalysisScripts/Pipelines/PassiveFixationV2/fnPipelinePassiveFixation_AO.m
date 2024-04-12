@@ -5,6 +5,16 @@ strDataRootFolder = strctInputs.m_strDataRootFolder;
 % strAoFile = strctInputs.m_strAoFile;
 % strMonkeyLogic = strctInputs.m_strMonkeyLogic;
 strSession = strctInputs.m_strSession;
+recording_room = strctInputs.recording_room; 
+
+
+if recording_room == '303'
+    eyetrack_sampling_rate = 0.5;
+    eyetrack_eye2 = 0;
+else
+    eyetrack_sampling_rate = 1;
+    eyetrack_eye2 = 1;
+end
 
 fnWorkerLog('Starting passive fixation standard analysis pipline...');
 fnWorkerLog('Session : %s',strSession);
@@ -107,14 +117,26 @@ for i=1:length(MLFile)
         MLEvents(element).ImageCode = MLFile(i).BehavioralCodes.CodeNumbers(iter)-10000;
         MLEvents(element).ML_OnTime = MLFile(i).BehavioralCodes.CodeTimes(iter);
         MLEvents(element).ML_OffTime = MLFile(i).BehavioralCodes.CodeTimes(End_iter);
-        Interval = floor(MLEvents(element).ML_OnTime):floor(MLEvents(element).ML_OffTime);
+
+        % --- for 303 half the sampling rate --- 
+        ML_OnTime_Index_eye = floor(MLFile(i).BehavioralCodes.CodeTimes(iter) / MLFile(i).AnalogData.SampleInterval);
+        ML_OffTime_Index_eye = floor(MLFile(i).BehavioralCodes.CodeTimes(End_iter) / MLFile(i).AnalogData.SampleInterval);
+        Interval = ML_OnTime_Index_eye : ML_OffTime_Index_eye;
+       % ----------------------------------------
+       
         MLEvents(element).Eye = MLFile(i).AnalogData.Eye(Interval,:);
-        MLEvents(element).Eye2 = MLFile(i).AnalogData.Eye2(Interval,:);
         EyeMoves = length(MLEvents(element).Eye);
         Eye_dis = sqrt(MLEvents(element).Eye(:,1).^2 + MLEvents(element).Eye(:,2).^2);
-        Eye2_dis = sqrt(MLEvents(element).Eye2(:,1).^2 + MLEvents(element).Eye2(:,2).^2);
+        
+        if eyetrack_eye2
+            MLEvents(element).Eye2 = MLFile(i).AnalogData.Eye2(Interval,:);
+                    Eye2_dis = sqrt(MLEvents(element).Eye2(:,1).^2 + MLEvents(element).Eye2(:,2).^2);
+                    ValidEyeMoves = sum(Eye2_dis<fixation_window | Eye_dis<fixation_window);
+        else
+            ValidEyeMoves = sum(Eye_dis<fixation_window);
 
-        ValidEyeMoves = sum(Eye2_dis<fixation_window | Eye_dis<fixation_window);
+        end
+
         %       Slow Version
         %         for move=1:EyeMoves
         %             Eye_dis = sqrt(MLEvents(element).Eye(move,1)^2+MLEvents(element).Eye(move,2)^2);
@@ -142,7 +164,7 @@ toc
 if ~(length(AOEventsFiltered) == length(MLEventsFiltered))
     fnWorkerLog('Length of processed AO File and ML File unequal, WangkeSheng''s way is not working');
     fnWorkerLog('Let us try Pinglei''s method');
-    [MLEventsFiltered AOEventsFiltered] = PB_matchingTrial(AoData,MLFile,fixation_window,Percent_Threshold);
+    [MLEventsFiltered AOEventsFiltered] = PB_matchingTrial(AoData,MLFile,fixation_window,Percent_Threshold, eyetrack_eye2);
 
 end
 

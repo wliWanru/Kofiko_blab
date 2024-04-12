@@ -1,4 +1,4 @@
-function [MLEvents AOEvents] = PB_matchingTrial(AOData,MLFile,fixation_window,Percent_Threshold);
+function [MLEvents AOEvents] = PB_matchingTrial(AOData,MLFile,fixation_window,Percent_Threshold, eyetrack_eye2);
 aoev = AOData.Trigger.events;
 aoev_t = AOData.Trigger.indices_44k_origin;
 
@@ -66,13 +66,27 @@ for i = 1:length(MLFile)
         MLEvents(element).ImageCode = MLFile(i).BehavioralCodes.CodeNumbers(iter)-10000;
         MLEvents(element).ML_OnTime = MLFile(i).BehavioralCodes.CodeTimes(iter);
         MLEvents(element).ML_OffTime = MLFile(i).BehavioralCodes.CodeTimes(End_iter);
-        Interval = floor(MLEvents(element).ML_OnTime):floor(MLEvents(element).ML_OffTime);
+
+
+        % --- for 303 half the sampling rate --- 
+        ML_OnTime_Index_eye = floor(MLFile(i).BehavioralCodes.CodeTimes(iter) / MLFile(i).AnalogData.SampleInterval);
+        ML_OffTime_Index_eye = floor(MLFile(i).BehavioralCodes.CodeTimes(End_iter) / MLFile(i).AnalogData.SampleInterval);
+        Interval = ML_OnTime_Index_eye : ML_OffTime_Index_eye;
+        % ----------------------------------------
+
         MLEvents(element).Eye = MLFile(i).AnalogData.Eye(Interval,:);
-        MLEvents(element).Eye2 = MLFile(i).AnalogData.Eye2(Interval,:);
         EyeMoves = length(MLEvents(element).Eye);
         Eye_dis = sqrt(MLEvents(element).Eye(:,1).^2 + MLEvents(element).Eye(:,2).^2);
-        Eye2_dis = sqrt(MLEvents(element).Eye2(:,1).^2 + MLEvents(element).Eye2(:,2).^2);
-        ValidEyeMoves = sum(Eye2_dis<fixation_window | Eye_dis<fixation_window);
+
+        if eyetrack_eye2
+            MLEvents(element).Eye2 = MLFile(i).AnalogData.Eye2(Interval,:);
+            Eye2_dis = sqrt(MLEvents(element).Eye2(:,1).^2 + MLEvents(element).Eye2(:,2).^2);
+            ValidEyeMoves = sum(Eye2_dis<fixation_window | Eye_dis<fixation_window);
+        else
+            ValidEyeMoves = sum(Eye_dis<fixation_window);
+
+        end
+
         MLEvents(element).ValidPer = ValidEyeMoves/EyeMoves;
         if MLEvents(element).ValidPer > Percent_Threshold
             MLEvents(element).IsValid = 1;
